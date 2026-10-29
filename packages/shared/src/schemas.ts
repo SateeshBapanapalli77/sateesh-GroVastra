@@ -566,6 +566,18 @@ export const CampaignTriggerSchema = z.discriminatedUnion('type', [
     ruleId: z.string().nullish(),
     anchor: z.string().nullish(),
   }),
+  z.object({
+    type: z.literal('FULFILMENT_MILESTONE'),
+    anchor: z.string().nullish().default('FULFILMENT_READY_AT'),
+    milestone: z.enum(['OUTFIT_READY', 'DISPATCHED', 'DELIVERED']).nullish(),
+    fulfilmentFilter: z.any().nullish(),
+    usefulForDays: z.number().nullish(),
+    field: z.string().nullish(),
+    leapDayPolicy: LeapDayPolicySchema.nullish(),
+    thresholdDays: z.number().nullish(),
+    category: z.string().nullish(),
+    ruleId: z.string().nullish(),
+  }),
 ]);
 
 export const AudienceRulePredicateSchema = z.object({

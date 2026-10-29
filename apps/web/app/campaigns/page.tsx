@@ -26,6 +26,7 @@ import {
   UserCheck,
   HelpCircle,
   Scissors,
+  Truck,
 } from 'lucide-react';
 import {
   Campaign,
@@ -229,6 +230,12 @@ export default function CampaignsPage() {
       case 'fitting_appointment':
       case 'alteration_milestone':
         return Scissors;
+      case 'outfit_collection_delivery':
+      case 'OUTFIT_COLLECTION_DELIVERY':
+      case 'outfit_fulfilment':
+      case 'fulfilment_milestone':
+      case 'outfit_collection':
+        return Truck;
       default:
         return ShoppingBag;
     }
@@ -321,7 +328,7 @@ export default function CampaignsPage() {
           <AlertTriangle size={18} color="var(--accent-amber)" style={{ flexShrink: 0 }} />
           <div style={{ fontSize: '0.85rem', color: '#fef3c7', lineHeight: 1.4 }}>
             <strong style={{ color: '#fff' }}>Hard Rule #10:</strong> No preset appears as functional until its evaluator is implemented.
-            Birthday, Anniversary, Win-Back, Welcome (First Visit), First-to-Second Purchase, Gift / Wedding Reminder, Unresolved Enquiry, and Complete the Outfit are active and fully operational in this release.
+            Birthday, Anniversary, Win-Back, Welcome (First Visit), First-to-Second Purchase, Gift / Wedding Reminder, Unresolved Enquiry, Complete the Outfit, Fitting & Alteration, and Outfit Collection / Delivery are active and fully operational in this release.
           </div>
         </div>
 
@@ -587,23 +594,41 @@ export default function CampaignsPage() {
                         />
                       </div>
 
-                      <span
-                        style={{
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          padding: '3px 8px',
-                          borderRadius: 6,
-                          background: isImplemented
-                            ? 'rgba(16, 185, 129, 0.15)'
-                            : 'rgba(255, 255, 255, 0.05)',
-                          color: isImplemented ? 'var(--accent-emerald)' : 'var(--text-muted)',
-                          border: isImplemented
-                            ? '1px solid rgba(16, 185, 129, 0.3)'
-                            : '1px solid var(--border-color)',
-                        }}
-                      >
-                        {isImplemented ? 'Ready to Configure' : 'Awaiting Evaluator'}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {(preset.id === 'outfit_collection_delivery' || (preset as any).category === 'SERVICE') && (
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              padding: '2px 7px',
+                              borderRadius: 6,
+                              background: 'rgba(56, 189, 248, 0.15)',
+                              color: '#38bdf8',
+                              border: '1px solid rgba(56, 189, 248, 0.35)',
+                              letterSpacing: '0.05em',
+                            }}
+                          >
+                            SERVICE
+                          </span>
+                        )}
+                        <span
+                          style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            borderRadius: 6,
+                            background: isImplemented
+                              ? 'rgba(16, 185, 129, 0.15)'
+                              : 'rgba(255, 255, 255, 0.05)',
+                            color: isImplemented ? 'var(--accent-emerald)' : 'var(--text-muted)',
+                            border: isImplemented
+                              ? '1px solid rgba(16, 185, 129, 0.3)'
+                              : '1px solid var(--border-color)',
+                          }}
+                        >
+                          {isImplemented ? 'Ready to Configure' : 'Awaiting Evaluator'}
+                        </span>
+                      </div>
                     </div>
 
                     <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', marginBottom: 8 }}>

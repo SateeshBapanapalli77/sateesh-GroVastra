@@ -69,6 +69,9 @@ export interface BindingResolutionContext {
   alterationStage?: string | null;
   alterationTrialDate?: string | null;
   alterationNotes?: string | null;
+  fulfilmentOrderNumber?: string | null;
+  shipmentCarrierName?: string | null;
+  shipmentTrackingRef?: string | null;
   now?: Date;
   timezone?: string;
 }
@@ -89,7 +92,7 @@ export interface BindingSourceDefinition {
   formatNote?: string;
   requiresRef?: 'offerRef' | 'creditRef';
   allowFallback: boolean; // only customer.firstName allows fallback
-  needs: Array<'customer' | 'shop' | 'occasion' | 'order' | 'offer' | 'stockoffer' | 'credit' | 'enquiry' | 'product' | 'outfit' | 'collection' | 'festival' | 'event' | 'appointment' | 'alteration'>;
+  needs: Array<'customer' | 'shop' | 'occasion' | 'order' | 'offer' | 'stockoffer' | 'credit' | 'enquiry' | 'product' | 'outfit' | 'collection' | 'festival' | 'event' | 'appointment' | 'alteration' | 'fulfilment'>;
   resolve: (ctx: BindingResolutionContext) => string | null;
 }
 
@@ -886,6 +889,72 @@ export const BINDING_SOURCES: Record<string, BindingSourceDefinition> = {
     allowFallback: true,
     needs: ['alteration'],
     resolve: (ctx) => ctx.alterationNotes || null,
+  },
+  'order.number': {
+    path: 'order.number',
+    label: 'Order Number',
+    valueType: 'text',
+    allowedPresets: [
+      'outfit_collection_delivery',
+      'OUTFIT_COLLECTION_DELIVERY',
+      'outfit_fulfilment',
+      'fulfilment_milestone',
+      'outfit_collection',
+    ],
+    sampleValue: 'ORD-9824',
+    formatNote: "The fulfilment order's own number, sanitized",
+    allowFallback: false,
+    needs: ['fulfilment'],
+    resolve: (ctx) => {
+      const val = ctx.fulfilmentOrderNumber || (ctx.order as any)?.orderNumber;
+      if (!val || typeof val !== 'string') return null;
+      const cleaned = val.replace(/[\r\n\t]+/g, ' ').trim();
+      return cleaned || null;
+    },
+  },
+  'shipment.carrierName': {
+    path: 'shipment.carrierName',
+    label: 'Carrier / Courier Name',
+    valueType: 'text',
+    allowedPresets: [
+      'outfit_collection_delivery',
+      'OUTFIT_COLLECTION_DELIVERY',
+      'outfit_fulfilment',
+      'fulfilment_milestone',
+      'outfit_collection',
+    ],
+    sampleValue: 'BlueDart Express',
+    formatNote: 'Courier or delivery carrier name, sanitized',
+    allowFallback: false,
+    needs: ['fulfilment'],
+    resolve: (ctx) => {
+      const val = ctx.shipmentCarrierName;
+      if (!val || typeof val !== 'string') return null;
+      const cleaned = val.replace(/[\r\n\t]+/g, ' ').trim();
+      return cleaned || null;
+    },
+  },
+  'shipment.trackingRef': {
+    path: 'shipment.trackingRef',
+    label: 'Shipment Tracking Reference',
+    valueType: 'text',
+    allowedPresets: [
+      'outfit_collection_delivery',
+      'OUTFIT_COLLECTION_DELIVERY',
+      'outfit_fulfilment',
+      'fulfilment_milestone',
+      'outfit_collection',
+    ],
+    sampleValue: 'BD123456789IN',
+    formatNote: 'Tracking number or tracking URL, sanitized',
+    allowFallback: false,
+    needs: ['fulfilment'],
+    resolve: (ctx) => {
+      const val = ctx.shipmentTrackingRef;
+      if (!val || typeof val !== 'string') return null;
+      const cleaned = val.replace(/[\r\n\t]+/g, ' ').trim();
+      return cleaned || null;
+    },
   },
 };
 

@@ -20,6 +20,7 @@ import { mockCreditSource } from '../../../adapters/CreditSource';
 import { mockOccasionSource } from '../../../adapters/occasion-source';
 import { mockEnquirySource } from '../../../adapters/enquiry-source';
 import { mockProductSource } from '../../../adapters/product-source';
+import { mockFulfilmentSource } from '../../../adapters/fulfilment-source';
 import { handleEnquirySavedOrUpdated, handleEnquiryResolvedOrDeleted } from '../../unresolvedEnquiry/enquiryChangeHandler';
 import { isQualifyingOrder } from '../orderTrigger/qualifying';
 import { campaignSettingsService } from '../../../services/campaign-settings.service';
@@ -919,6 +920,267 @@ export async function dispatchRecheck(
 
     const rupees = offer.amountPaise / 100;
     offerAmountRupees = rupees % 1 === 0 ? String(rupees) : rupees.toFixed(2);
+  }
+
+  // Fulfilment Milestone Recheck (Spec p15, F31)
+  const isFulfilmentOccurrence =
+    Boolean(enrollment?.occurrenceId?.startsWith('ready:')) ||
+    Boolean(enrollment?.occurrenceId?.startsWith('dispatch:')) ||
+    Boolean(enrollment?.occurrenceId?.startsWith('delivered:'));
+
+  if (isFulfilmentOccurrence) {
+    const occurrenceId = enrollment?.occurrenceId || '';
+    const parts = occurrenceId.split(':');
+    const kind = parts[0]; // 'ready' | 'dispatch' | 'delivered'
+    const orderId = parts[1];
+
+    const fulfilment = await mockFulfilmentSource.getFulfilment(tenantId, orderId);
+    if (!fulfilment) {
+      return {
+        proceed: false,
+        shouldProceed: false,
+        stopReason: 'FULFILMENT_NOT_FOUND',
+        reason: 'FULFILMENT_NOT_FOUND',
+        terminalState: EXECUTION_STATE.SKIPPED,
+        action: 'SKIP',
+      };
+    }
+
+    if (kind === 'ready') {
+      const plannedReadinessVersion = Number(parts[2]);
+
+      // Check status moved on
+      if (fulfilment.status === 'COLLECTED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'ORDER_COLLECTED',
+          reason: 'ORDER_COLLECTED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (fulfilment.status === 'DELIVERED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'ORDER_DELIVERED',
+          reason: 'ORDER_DELIVERED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (fulfilment.status === 'CANCELLED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'ORDER_CANCELLED',
+          reason: 'ORDER_CANCELLED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (fulfilment.status === 'RETURNED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'ORDER_RETURNED',
+          reason: 'ORDER_RETURNED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (fulfilment.status === 'REWORK') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'ORDER_IN_REWORK',
+          reason: 'ORDER_IN_REWORK',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (fulfilment.mode === 'DELIVERY') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'DELIVERY_ARRANGED',
+          reason: 'DELIVERY_ARRANGED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      // If the order is now PARTIALLY_READY for a full-ready step -> skip PARTIAL_READY_NOT_ALLOWED
+      if (
+        (fulfilment.status === 'PARTIALLY_READY' || fulfilment.readinessKind === 'PARTIAL') &&
+        execution.selectionSnapshot?.readinessKind === 'FULL'
+      ) {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'PARTIAL_READY_NOT_ALLOWED',
+          reason: 'PARTIAL_READY_NOT_ALLOWED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+
+      if (fulfilment.readinessVersion !== plannedReadinessVersion) {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'BLOCKED_STALE_INTENT',
+          reason: 'BLOCKED_STALE_INTENT',
+          terminalState: EXECUTION_STATE.BLOCKED,
+          action: 'SKIP',
+        };
+      }
+    } else if (kind === 'dispatch') {
+      const shipmentId = parts[2];
+      const shipment = fulfilment.shipments?.find((s) => s.shipmentId === shipmentId);
+
+      if (!shipment) {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'SHIPMENT_FAILED',
+          reason: 'SHIPMENT_FAILED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+
+      if (fulfilment.status === 'CANCELLED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'ORDER_CANCELLED',
+          reason: 'ORDER_CANCELLED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (fulfilment.status === 'RETURNED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'ORDER_RETURNED',
+          reason: 'ORDER_RETURNED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (fulfilment.status === 'DELIVERED' || shipment.status === 'DELIVERED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'STATUS_SUPERSEDED',
+          reason: 'STATUS_SUPERSEDED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (shipment.status === 'FAILED' || shipment.status === 'RETURNED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'SHIPMENT_FAILED',
+          reason: 'SHIPMENT_FAILED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (fulfilment.mode === 'PICKUP') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'PICKUP_ARRANGED',
+          reason: 'PICKUP_ARRANGED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (!shipment.verified || shipment.status !== 'DISPATCHED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'UNVERIFIED_SHIPMENT_EVENT',
+          reason: 'UNVERIFIED_SHIPMENT_EVENT',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      // If step bindings map shipment.trackingRef and it's missing:
+      const stepBindings = execution.bindings || {};
+      const bindsTracking = Object.values(stepBindings).some(
+        (b: any) => (typeof b === 'string' ? b : b?.source) === 'shipment.trackingRef'
+      );
+      if (bindsTracking && !shipment.trackingRef) {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'MISSING_VARIABLE',
+          reason: 'MISSING_VARIABLE',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+    } else if (kind === 'delivered') {
+      const shipmentId = parts[2];
+      const shipment = fulfilment.shipments?.find((s) => s.shipmentId === shipmentId);
+
+      if (!shipment) {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'SHIPMENT_FAILED',
+          reason: 'SHIPMENT_FAILED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+
+      if (fulfilment.status === 'CANCELLED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'ORDER_CANCELLED',
+          reason: 'ORDER_CANCELLED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (fulfilment.status === 'RETURNED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'ORDER_RETURNED',
+          reason: 'ORDER_RETURNED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (shipment.status === 'FAILED' || shipment.status === 'RETURNED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'SHIPMENT_FAILED',
+          reason: 'SHIPMENT_FAILED',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+      if (!shipment.verified || shipment.status !== 'DELIVERED') {
+        return {
+          proceed: false,
+          shouldProceed: false,
+          stopReason: 'UNVERIFIED_SHIPMENT_EVENT',
+          reason: 'UNVERIFIED_SHIPMENT_EVENT',
+          terminalState: EXECUTION_STATE.SKIPPED,
+          action: 'SKIP',
+        };
+      }
+    }
   }
 
   return {

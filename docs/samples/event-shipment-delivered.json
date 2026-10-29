@@ -1,0 +1,25 @@
+{
+    "schemaVersion": 1,
+    "producer": "fulfilment",
+    "eventId": "evt_shp_002",
+    "tenantId": "shop_a",
+    "type": "shipment.updated",
+    "entityId": "shp_f_001",
+    "entityVersion": 4,
+    "occurredAt": "2026-11-01T12:00:00Z",
+    "receivedAt": "2026-11-01T12:00:02Z",
+    "customerId": "cus_002",
+    "data": {
+        "orderId": "ord_f_002",
+        "orderNumber": "ORD-F-002",
+        "branchId": "branch_main",
+        "carrier": "SAMPLE_COURIER",
+        "carrierName": "Sample Courier",
+        "trackingRef": "SC123456789",
+        "status": "DELIVERED",
+        "verified": true,
+        "courierEventId": "cr_evt_200",
+        "dispatchedAt": "2026-10-30T14:00:00Z",
+        "deliveredAt": "2026-11-01T12:00:00Z"
+    }
+}

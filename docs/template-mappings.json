@@ -283,6 +283,20 @@
                             "source": "offer.validUntilDate"
                         }
                     }
+                },
+                "outfit_collection_delivery": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "order.number"
+                        },
+                        "3": {
+                            "source": "literal",
+                            "value": "TEST-FULFIL"
+                        }
+                    }
                 }
             }
         },
@@ -882,6 +896,129 @@
                         },
                         "5": {
                             "source": "offer.validUntilDate"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_fulfil_ready",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "outfit_collection_delivery": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "order.number"
+                        },
+                        "3": {
+                            "source": "shop.displayName"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_fulfil_ready_partial",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "outfit_collection_delivery": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "order.number"
+                        },
+                        "3": {
+                            "source": "shop.displayName"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_fulfil_reminder",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "outfit_collection_delivery": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "order.number"
+                        },
+                        "3": {
+                            "source": "shop.displayName"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_fulfil_dispatched",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "outfit_collection_delivery": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "order.number"
+                        },
+                        "3": {
+                            "source": "shipment.carrierName"
+                        },
+                        "4": {
+                            "source": "shipment.trackingRef"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_fulfil_dispatched_simple",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "outfit_collection_delivery": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "order.number"
+                        },
+                        "3": {
+                            "source": "shop.displayName"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_fulfil_delivered",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "outfit_collection_delivery": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "order.number"
+                        },
+                        "3": {
+                            "source": "shop.displayName"
                         }
                     }
                 }

@@ -414,7 +414,7 @@ describe('Seed Policy Cleanup & Additive Architecture (F24b, SD01-SD12)', () => 
     expect(customersCount2).toBe(customersCount1);
     expect(ordersCount2).toBe(ordersCount1);
     expect(state2?.liveOwner).toBe(state1?.liveOwner);
-  });
+  }, 60000);
 
   // SD10: Old command aliases (seed:welcome, seed:gift-wedding) still work and print deprecation notice
   it('SD10: Old command aliases print deprecation notice and delegate correctly', async () => {

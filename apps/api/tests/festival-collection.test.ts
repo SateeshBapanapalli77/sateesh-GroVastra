@@ -497,6 +497,10 @@ describe('Preset Festival Collection (F28) — Fan-out & Idempotency', () => {
   });
 
   it('FC22: second fan-out run is idempotent (0 new enrollments created)', async () => {
+    await fanoutFestivalSeason(TENANT, 'season_fc_diwali', 'evt_fc22_run1', {
+      campaignId: 'cmp_festival_collection',
+      now: NOW,
+    });
     const result2 = await fanoutFestivalSeason(TENANT, 'season_fc_diwali', 'evt_fc22_run2', {
       campaignId: 'cmp_festival_collection',
       now: NOW,

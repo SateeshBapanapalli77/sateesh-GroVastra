@@ -35,6 +35,7 @@ import { SrcSeasonModel } from '../db/models/src-season.model';
 import { SrcEventModel } from '../db/models/src-event.model';
 import { SrcAppointmentModel } from '../db/models/src-appointment.model';
 import { SrcAlterationModel } from '../db/models/src-alteration.model';
+import { SrcFulfilmentModel } from '../db/models/src-fulfilment.model';
 import { matchSelectedStock } from '../presets/selectedStockPromotion/matching';
 
 export interface CanonicalParameter {
@@ -710,6 +711,78 @@ export async function buildResolutionSnapshot(
     }
   }
 
+  let fulfilmentOrderNumber: string | null = (ctx.overrides as any)?.fulfilmentOrderNumber || null;
+  let shipmentCarrierName: string | null = (ctx.overrides as any)?.shipmentCarrierName || null;
+  let shipmentTrackingRef: string | null = (ctx.overrides as any)?.shipmentTrackingRef || null;
+
+  if (
+    neededDeps.has('fulfilment') ||
+    (ctx.enrollment?.occurrenceId &&
+      (ctx.enrollment.occurrenceId.startsWith('ready:') ||
+        ctx.enrollment.occurrenceId.startsWith('dispatch:') ||
+        ctx.enrollment.occurrenceId.startsWith('delivered:'))) ||
+    (ctx.execution as any)?.selectionSnapshot?.orderId
+  ) {
+    const selSnapshot = (ctx.execution as any)?.selectionSnapshot;
+    const orderId =
+      selSnapshot?.orderId ||
+      (ctx.enrollment as any)?.metadata?.orderId ||
+      (ctx.enrollment?.occurrenceId?.startsWith('ready:')
+        ? ctx.enrollment.occurrenceId.split(':')[1]
+        : ctx.enrollment?.occurrenceId?.startsWith('dispatch:')
+        ? ctx.enrollment.occurrenceId.split(':')[1]
+        : ctx.enrollment?.occurrenceId?.startsWith('delivered:')
+        ? ctx.enrollment.occurrenceId.split(':')[1]
+        : null);
+
+    let fulfilmentDoc: any = null;
+    if (orderId) {
+      try {
+        fulfilmentDoc = await SrcFulfilmentModel.findOne({ tenantId: ctx.tenantId, orderId }).lean();
+      } catch {}
+    }
+
+    if (!fulfilmentOrderNumber) {
+      fulfilmentOrderNumber =
+        selSnapshot?.orderNumber ||
+        (ctx.enrollment as any)?.metadata?.orderNumber ||
+        fulfilmentDoc?.orderNumber ||
+        (ctx.order as any)?.orderNumber ||
+        null;
+    }
+
+    const shipmentId =
+      selSnapshot?.shipmentId ||
+      (ctx.enrollment as any)?.metadata?.shipmentId ||
+      (ctx.enrollment?.occurrenceId?.startsWith('dispatch:')
+        ? ctx.enrollment.occurrenceId.split(':')[2]
+        : ctx.enrollment?.occurrenceId?.startsWith('delivered:')
+        ? ctx.enrollment.occurrenceId.split(':')[2]
+        : null);
+
+    let shipmentDoc: any = null;
+    if (fulfilmentDoc?.shipments && shipmentId) {
+      shipmentDoc = fulfilmentDoc.shipments.find((s: any) => s.shipmentId === shipmentId);
+    }
+
+    if (!shipmentCarrierName) {
+      shipmentCarrierName =
+        selSnapshot?.carrierName ||
+        selSnapshot?.carrier ||
+        shipmentDoc?.carrierName ||
+        shipmentDoc?.carrier ||
+        null;
+    }
+
+    if (!shipmentTrackingRef) {
+      shipmentTrackingRef =
+        selSnapshot?.trackingRef ||
+        shipmentDoc?.trackingRef ||
+        (ctx.enrollment as any)?.metadata?.trackingRef ||
+        null;
+    }
+  }
+
   const snapshot: BindingResolutionContext = {
     customer,
     shopName,
@@ -750,6 +823,9 @@ export async function buildResolutionSnapshot(
     alterationStage,
     alterationTrialDate,
     alterationNotes,
+    fulfilmentOrderNumber,
+    shipmentCarrierName,
+    shipmentTrackingRef,
     match: stockMatch
       ? {
           itemList: matchItemList,

@@ -13,4 +13,5 @@ export * from './season-source';
 export * from './event-source';
 export * from './appointment-source';
 export * from './alteration-source';
+export * from './fulfilment-source';
 export { mockOccasionSource } from '../dev/mock/mock-occasion-source';

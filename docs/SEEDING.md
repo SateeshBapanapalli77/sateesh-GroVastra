@@ -58,6 +58,8 @@ The seed engine uses a **two-layer, additive, labeled design**. Every seed comma
 | `unresolved-enquiry` | Unresolved Enquiry Follow-up | Customers with open enquiries |
 | `complete-outfit` | Complete the Outfit | Customers with outfit-eligible orders |
 | `selected-stock-promotion` | Selected-stock Promotion | 12 products, 40 customers, edge-case draft/withdrawn/expired offers, and an ACTIVE F27 campaign |
+| `fitting-alteration` | Fitting / Alteration | 4 appointments, 3 alteration jobs, 25 customers across shop_a and shop_b |
+| `outfit-fulfilment` | Outfit Collection / Delivery | 14 customers, 16 fulfilments, 4 campaigns across pickup and courier delivery modes |
 
 ---
 

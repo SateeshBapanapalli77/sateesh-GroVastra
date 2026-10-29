@@ -64,7 +64,7 @@ describe('Campaign Creation, Draft Management & Validation Engine (Feature 5, Sp
       const birthday = res.body.find((p: any) => p.id === 'birthday');
       const anniversary = res.body.find((p: any) => p.id === 'anniversary');
       const winBack = res.body.find((p: any) => p.id === 'win_back');
-      const festival = res.body.find((p: any) => p.id === 'festival');
+      const festival = res.body.find((p: any) => p.id === 'festival_collection' || p.id === 'festival');
 
       expect(birthday).toBeDefined();
       expect(birthday.implemented).toBe(true);
@@ -78,9 +78,9 @@ describe('Campaign Creation, Draft Management & Validation Engine (Feature 5, Sp
       expect(winBack.implemented).toBe(true);
       expect(winBack.defaults.trigger.type).toBe('INACTIVITY_THRESHOLD');
 
-      // Unimplemented presets remain implemented: false
+      // Festival is implemented in F28 (Hard Rule 10, Spec p5, p13, p18)
       expect(festival).toBeDefined();
-      expect(festival.implemented).toBe(false);
+      expect(festival.implemented).toBe(true);
     });
 
     it('supports alias /api/v1/campaign-presets', async () => {

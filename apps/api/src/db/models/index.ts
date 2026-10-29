@@ -34,6 +34,7 @@ export * from './src-season.model';
 export * from './src-event.model';
 export * from './src-appointment.model';
 export * from './src-alteration.model';
+export * from './src-fulfilment.model';
 export * from './dev-seed-state.model';
 
 

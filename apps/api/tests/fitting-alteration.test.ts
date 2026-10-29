@@ -204,10 +204,12 @@ describe('Preset Fitting / Alteration (F30, FA01-FA35)', () => {
     });
 
     it('FA07: C14 Anti-Cap-Bypass: service templates do not contain offer variables', () => {
-      const confBindings = FITTING_ALTERATION_DEFINITION.defaultSteps?.flatMap((s) => s.bindings);
-      const sources = confBindings?.map((b) => b.source);
-      expect(sources?.some((s) => s.includes('offer'))).toBe(false);
-      expect(sources?.some((s) => s.includes('discount'))).toBe(false);
+      const confBindings = FITTING_ALTERATION_DEFINITION.defaults?.steps?.flatMap((s: any) =>
+        Array.isArray(s.bindings) ? s.bindings : Object.values(s.bindings || {})
+      );
+      const sources = confBindings?.map((b: any) => b.source);
+      expect(sources?.some((s: any) => s.includes('offer'))).toBe(false);
+      expect(sources?.some((s: any) => s.includes('discount'))).toBe(false);
     });
   });
 

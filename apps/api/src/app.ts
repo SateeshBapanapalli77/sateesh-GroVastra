@@ -29,6 +29,7 @@ import { selectedStockPromotionRouter } from './presets/selectedStockPromotion/r
 import { festivalCollectionRouter } from './presets/festivalCollection/routes';
 import { exhibitionTrunkShowRouter } from './presets/exhibitionTrunkShow/routes';
 import { fittingAlterationRouter } from './presets/fittingAlteration/routes';
+import { outfitCollectionDeliveryRouter } from './presets/outfitCollectionDelivery/routes';
 import { mockEnquiryDevRouter } from './dev/mockEnquiryDevRoutes';
 import { mockProductDevRouter } from './dev/mockProductDevRoutes';
 import { mockRequestDevRouter } from './dev/mockRequestDevRoutes';
@@ -97,6 +98,8 @@ export function createApp(): express.Application {
   app.use('/api/v1', exhibitionTrunkShowRouter);
   app.use(fittingAlterationRouter);
   app.use('/api/v1', fittingAlterationRouter);
+  app.use(outfitCollectionDeliveryRouter);
+  app.use('/api/v1', outfitCollectionDeliveryRouter);
   app.use(mockEnquiryDevRouter);
   app.use('/api/v1', mockEnquiryDevRouter);
   app.use(mockProductDevRouter);

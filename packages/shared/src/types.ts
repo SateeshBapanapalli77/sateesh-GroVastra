@@ -567,7 +567,9 @@ export interface CampaignTrigger {
     | 'CUSTOMER_EVENT_DATE'
     | 'ENQUIRY_EVENT_DELAY'
     | 'ORDER_EVENT_DELAY'
-    | 'REQUEST_STOCK_AVAILABLE';
+    | 'REQUEST_STOCK_AVAILABLE'
+    | 'FULFILMENT_MILESTONE'
+    | 'PRODUCTION_MILESTONE';
   field?: string; // 'customer.birthday' | 'customer.event'
   occasionKind?: 'GIFT' | 'WEDDING';
   fulfillmentLeadDays?: number;
@@ -579,6 +581,10 @@ export interface CampaignTrigger {
   reasonFilter?: string[];
   unitFilter?: 'POINTS' | 'PAISE';
   amountGte?: number;
+  milestone?: string;
+  fulfilmentFilter?: any;
+  usefulForDays?: number;
+  partialReadyTemplateRef?: any;
 }
 
 export interface AudienceRulePredicate {

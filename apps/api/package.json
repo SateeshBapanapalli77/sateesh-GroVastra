@@ -29,6 +29,7 @@
     "reconcile:festival": "tsx src/scripts/reconcile-festival.ts",
     "reconcile:exhibition": "tsx src/scripts/reconcile-exhibition.ts",
     "reconcile:fitting": "tsx src/scripts/reconcile-fitting.ts",
+    "reconcile:fulfilment": "tsx src/scripts/reconcile-fulfilment.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -133,6 +133,10 @@ const TriggerSchema = new Schema(
     eventDelayAnchor: { type: String, default: null },
     occasionKind: { type: String, enum: ['GIFT', 'WEDDING'], default: null },
     fulfillmentLeadDays: { type: Number, default: null },
+    milestone: { type: String, default: null },
+    fulfilmentFilter: { type: String, default: null },
+    usefulForDays: { type: Number, default: null },
+    partialReadyTemplateRef: { type: Schema.Types.Mixed, default: null },
   },
   { _id: false }
 );
@@ -267,6 +271,18 @@ const CampaignVersionSchema = new Schema<ICampaignVersion>(
     requireItem: {
       type: Boolean,
       default: false,
+    },
+    milestone: {
+      type: String,
+      default: null,
+    },
+    fulfilmentFilter: {
+      type: String,
+      default: null,
+    },
+    partialReadyTemplateRef: {
+      type: Schema.Types.Mixed,
+      default: null,
     },
     activatedBy: {
       type: String,

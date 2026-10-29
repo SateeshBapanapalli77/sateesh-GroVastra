@@ -254,3 +254,62 @@ export function computeDueTimes(
     timezone,
   };
 }
+
+export function formatDateOnly(date: Date, timezone: string = 'Asia/Kolkata'): string {
+  return DateTime.fromJSDate(date, { zone: timezone }).toISODate() || '';
+}
+
+export function formatTimeOnly(date: Date, timezone: string = 'Asia/Kolkata'): string {
+  return DateTime.fromJSDate(date, { zone: timezone }).toFormat('HH:mm');
+}
+
+export function delayTiming(params: {
+  rawDueAt?: Date;
+  anchorAt?: Date;
+  timezone?: string;
+  outsideHoursPolicy?: 'DEFER_NEXT_DAY' | 'SKIP';
+  maxDeferralHours?: number;
+  allowedSendingHours?: { start: string; end: string };
+  maxLatenessMinutes?: number;
+  campaignEndAt?: Date | null;
+  now?: Date;
+}): {
+  rawDueAt: Date;
+  adjustedDueAt: Date;
+  expiresAt: Date;
+  isDeferred: boolean;
+  deferralReason?: string;
+  skipReason?: string;
+  localDate: string;
+  localTime: string;
+} {
+  const anchor = params.rawDueAt || params.anchorAt || new Date();
+  const res = computeDueTimes(
+    anchor,
+    { unit: 'MINUTES', value: 0 },
+    {
+      allowedSendingHours: params.allowedSendingHours || { start: '10:00', end: '19:00' },
+      timezone: params.timezone || 'Asia/Kolkata',
+    },
+    {
+      outsideHoursPolicy: params.outsideHoursPolicy || 'DEFER_NEXT_DAY',
+      maxDeferralHours: params.maxDeferralHours ?? 16,
+      maxLatenessMinutes: params.maxLatenessMinutes ?? 360,
+    },
+    {
+      now: params.now,
+      campaignEndAt: params.campaignEndAt,
+      maxLatenessMinutes: params.maxLatenessMinutes ?? 360,
+    }
+  );
+  return {
+    rawDueAt: res.rawDueAt,
+    adjustedDueAt: res.adjustedDueAt,
+    expiresAt: res.expiresAt,
+    isDeferred: res.isDeferred,
+    deferralReason: res.deferralReason,
+    skipReason: res.skipReason,
+    localDate: res.adjustedLocalDate,
+    localTime: res.adjustedLocalTime,
+  };
+}

@@ -1,0 +1,36 @@
+OD01 | ready notice enrolls and sends
+OD02 | replay and duplicate courier events
+OD03 | stale events ignored
+OD04 | partial ready
+OD05 | delivery arranged
+OD06 | uncollected reminder timing
+OD07 | collected stops reminders
+OD08 | rework
+OD09 | readiness version rule
+OD10 | dispatched needs verified event
+OD11 | tracking reference
+OD12 | delivered
+OD13 | superseded status
+OD14 | shipment stale and duplicate
+OD15 | service purpose rules
+OD16 | permissions
+OD17 | service spacing
+OD18 | per order and step dedupe
+OD19 | quiet hours
+OD20 | no promotion in service
+OD21 | future only
+OD22 | dispatch recheck
+OD23 | stale intent
+OD24 | racing replan
+OD25 | reply handling
+OD26 | reconciler
+OD27 | bindings
+OD28 | dry run and preview
+OD29 | summary counts
+OD30 | boundaries
+OD31 | seed scenario
+OD32 | tenant isolation
+OD33 | samples and contracts parse
+OD34 | service and marketing interplay
+OD35 | dummy template blocked in meta mode
+OD36 | pause and archive

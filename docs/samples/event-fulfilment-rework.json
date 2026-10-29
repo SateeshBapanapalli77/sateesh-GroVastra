@@ -1,0 +1,22 @@
+{
+    "schemaVersion": 1,
+    "producer": "fulfilment",
+    "eventId": "evt_ful_003",
+    "tenantId": "shop_a",
+    "type": "fulfilment.updated",
+    "entityId": "ord_f_003",
+    "entityVersion": 5,
+    "occurredAt": "2026-10-31T12:00:00Z",
+    "receivedAt": "2026-10-31T12:00:02Z",
+    "customerId": "cus_003",
+    "data": {
+        "orderNumber": "ORD-F-003",
+        "branchId": "branch_main",
+        "mode": "PICKUP",
+        "status": "REWORK",
+        "readinessKind": "FULL",
+        "readinessVersion": 1,
+        "readyAt": "2026-10-30T09:00:00Z",
+        "reason": "ALTERATION_REQUIRED"
+    }
+}

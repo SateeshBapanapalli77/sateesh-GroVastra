@@ -61,6 +61,11 @@ import {
   FITTING_ALTERATION_ID,
   FITTING_ALTERATION_ALIASES,
 } from '../presets/fittingAlteration/definition';
+import {
+  OUTFIT_COLLECTION_DELIVERY_DEFINITION,
+  OUTFIT_COLLECTION_DELIVERY_ID,
+  OUTFIT_COLLECTION_DELIVERY_ALIASES,
+} from '../presets/outfitCollectionDelivery/definition';
 
 /**
  * Calculates nextEvaluationAt for campaign activation adhering to Spec p17, p29, p33:
@@ -586,14 +591,7 @@ export const CAMPAIGN_PRESETS: CampaignPreset[] = [
     category: 'MARKETING',
   },
   FITTING_ALTERATION_DEFINITION as unknown as CampaignPreset,
-  {
-    id: 'outfit_collection',
-    name: 'Outfit Collection / Delivery',
-    description: 'Actual fulfillment milestone. Reduce missed collections and status calls.',
-    triggerFamily: 'FULFILLMENT_MILESTONE',
-    implemented: false,
-    category: 'SERVICE',
-  },
+  OUTFIT_COLLECTION_DELIVERY_DEFINITION as unknown as CampaignPreset,
   WELCOME_NEW_CUSTOMER_DEFINITION,
   REQUESTED_ITEM_AVAILABLE_DEFINITION as CampaignPreset,
   SELECTED_STOCK_PROMOTION_DEFINITION as unknown as CampaignPreset,
@@ -695,6 +693,14 @@ export class CampaignService {
           presetId.toLowerCase() === 'alteration_milestone' ||
           presetId.toLowerCase() === 'fitting-alteration') &&
           (p.id === FITTING_ALTERATION_ID || FITTING_ALTERATION_ALIASES.includes(p.id as any)))
+        ||
+        ((presetId.toLowerCase() === OUTFIT_COLLECTION_DELIVERY_ID ||
+          presetId.toLowerCase() === 'outfit_collection' ||
+          presetId.toLowerCase() === 'outfit_collection_delivery' ||
+          presetId.toLowerCase() === 'outfit_fulfilment' ||
+          presetId.toLowerCase() === 'fulfilment_milestone' ||
+          presetId.toLowerCase() === 'outfit-collection-delivery') &&
+          (p.id === OUTFIT_COLLECTION_DELIVERY_ID || OUTFIT_COLLECTION_DELIVERY_ALIASES.includes(p.id as any) || p.id === 'outfit_collection'))
     );
     if (!p) return undefined;
 

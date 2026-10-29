@@ -27,7 +27,7 @@ import {
   TenantModel,
   TenantControlGateModel,
 } from '../../db/models';
-import { mockCustomerSource, mockOccasionSource, mockEnquirySource, mockProductSource, mockRequestSource } from '../../adapters';
+import { mockCustomerSource, mockOccasionSource, mockEnquirySource, mockProductSource, mockRequestSource, mockFulfilmentSource } from '../../adapters';
 import { campaignSettingsService } from '../campaign-settings.service';
 import { contactGateService } from '../contact-gate';
 import { clock } from '../clock';
@@ -326,7 +326,12 @@ export class WorkerService {
       );
     }
 
-    if (customer.consent?.marketingOptIn === false || customer.status === 'OPTED_OUT') {
+    const isServiceExecution =
+      version?.purpose === 'SERVICE' ||
+      campaign?.presetId === 'outfit_collection_delivery' ||
+      campaign?.presetId === 'fitting_alteration';
+
+    if (!isServiceExecution && (customer.consent?.marketingOptIn === false || customer.status === 'OPTED_OUT')) {
       await this.cancelRemainingEnrollmentSteps(tenantId, enrollmentId, EXECUTION_REASONS.MARKETING_OPT_OUT);
       return this.rejectExecution(
         execution,
@@ -553,6 +558,97 @@ export class WorkerService {
       );
     }
 
+    // Fulfilment dispatch recheck (Spec p18, p30, F31)
+    const fulSnapshot = execution.selectionSnapshot as any;
+    if (fulSnapshot?.orderId) {
+      const currentFulfilment = await mockFulfilmentSource.getFulfilment(tenantId, fulSnapshot.orderId);
+      if (currentFulfilment) {
+        if (currentFulfilment.status === 'COLLECTED') {
+          return this.rejectExecution(
+            execution,
+            leaseToken,
+            EXECUTION_STATE.SKIPPED,
+            'ORDER_COLLECTED'
+          );
+        }
+        if (currentFulfilment.status === 'DELIVERED') {
+          return this.rejectExecution(
+            execution,
+            leaseToken,
+            EXECUTION_STATE.SKIPPED,
+            'ORDER_DELIVERED'
+          );
+        }
+        if (currentFulfilment.status === 'REWORK') {
+          return this.rejectExecution(
+            execution,
+            leaseToken,
+            EXECUTION_STATE.SKIPPED,
+            'ORDER_IN_REWORK'
+          );
+        }
+        if (currentFulfilment.status === 'CANCELLED') {
+          return this.rejectExecution(
+            execution,
+            leaseToken,
+            EXECUTION_STATE.SKIPPED,
+            'ORDER_CANCELLED'
+          );
+        }
+      }
+
+      let changed = false;
+      if (!currentFulfilment) {
+        changed = true;
+      } else {
+        if (fulSnapshot.orderNumber && currentFulfilment.orderNumber !== fulSnapshot.orderNumber) {
+          changed = true;
+        }
+        if (fulSnapshot.readinessVersion !== undefined && currentFulfilment.readinessVersion !== fulSnapshot.readinessVersion) {
+          changed = true;
+        }
+        if (fulSnapshot.entityVersion !== undefined && currentFulfilment.entityVersion !== fulSnapshot.entityVersion) {
+          changed = true;
+        }
+        if (fulSnapshot.shipmentId) {
+          const currentShipment = currentFulfilment.shipments?.find((s: any) => s.shipmentId === fulSnapshot.shipmentId);
+          if (!currentShipment) {
+            changed = true;
+          } else {
+            if (fulSnapshot.trackingRef !== undefined && currentShipment.trackingRef !== fulSnapshot.trackingRef) {
+              changed = true;
+            }
+            if (fulSnapshot.carrier !== undefined && currentShipment.carrier !== fulSnapshot.carrier) {
+              changed = true;
+            }
+          }
+        }
+      }
+
+      if (changed) {
+        logger.warn(
+          { executionId: execution.executionId, orderId: fulSnapshot.orderId },
+          'Source fulfilment record or shipment changed after intent freeze -> BLOCKED_STALE_INTENT.'
+        );
+        const existingIntent = await CampaignDeliveryIntentModel.findOne({
+          tenantId,
+          executionId: execution.executionId,
+        });
+        if (existingIntent) {
+          await CampaignDeliveryIntentModel.updateOne(
+            { tenantId, executionId: execution.executionId },
+            { $set: { state: DELIVERY_INTENT_STATE.BLOCKED_STALE_INTENT } }
+          );
+        }
+        return this.rejectExecution(
+          execution,
+          leaseToken,
+          EXECUTION_STATE.BLOCKED,
+          EXECUTION_REASONS.BLOCKED_STALE_INTENT
+        );
+      }
+    }
+
     // Live dispatch recheck for EVENT_DELAY / Welcome / Purchase Delay executions (Spec p19, p20, F19 & F20 Contract)
     const isEventDelayStep =
       Boolean((execution as any).delaySpec) ||
@@ -572,6 +668,9 @@ export class WorkerService {
       enrollment.occurrenceId.startsWith('gift:') ||
       enrollment.occurrenceId.startsWith('wedding:') ||
       enrollment.occurrenceId.startsWith('outfit:') ||
+      enrollment.occurrenceId.startsWith('ready:') ||
+      enrollment.occurrenceId.startsWith('dispatch:') ||
+      enrollment.occurrenceId.startsWith('delivered:') ||
       (stepConfig as any).delay !== undefined;
 
     let recheckData: {
@@ -778,46 +877,77 @@ export class WorkerService {
     }).lean();
 
     if (competingExecutions.length > 0) {
-      // Rank current execution and all competing executions deterministically:
-      // priority desc, then earliest expiry, then stable creation time/ID
-      const myRanking = {
-        executionId: execution.executionId,
-        priority: version?.priority ?? (campaign?.presetId && settings?.priorityAllowlistRanges?.[campaign.presetId]) ?? 80,
-        expiresAt: new Date(execution.expiresAt).getTime(),
-        createdAt: new Date((execution as any).createdAt || serverNow).getTime(),
-      };
-
-      const competitorRankings = await Promise.all(
-        competingExecutions.map(async (dueEx) => {
-          const enr = sharedEnrollments.find((e) => e.enrollmentId === dueEx.enrollmentId);
-          let exPriority = 50;
-          if (enr) {
+      const competitorRankings = (
+        await Promise.all(
+          competingExecutions.map(async (dueEx) => {
+            const enr = sharedEnrollments.find((e) => e.enrollmentId === dueEx.enrollmentId);
+            if (!enr) return null;
             const camp: any = await CampaignModel.findOne({ tenantId, campaignId: dueEx.campaignId }).lean();
             const ver: any = await CampaignVersionModel.findOne({
               tenantId,
               campaignId: dueEx.campaignId,
               version: enr.campaignVersion,
             }).lean();
-            exPriority = ver?.priority ?? (camp?.presetId && settings?.priorityAllowlistRanges?.[camp.presetId]) ?? 50;
-          }
-          return {
-            executionId: dueEx.executionId,
-            priority: exPriority,
-            expiresAt: new Date(dueEx.expiresAt).getTime(),
-            createdAt: new Date(dueEx.createdAt).getTime(),
-          };
-        })
-      );
 
-      const allRankings = [myRanking, ...competitorRankings];
-      allRankings.sort((a, b) => {
-        if (b.priority !== a.priority) return b.priority - a.priority;
-        if (a.expiresAt !== b.expiresAt) return a.expiresAt - b.expiresAt;
-        if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
-        return a.executionId.localeCompare(b.executionId);
-      });
+            const exEffectivePurpose = contactGateService.resolveEffectivePurpose(
+              (dueEx as any).templateRef?.category || (dueEx as any).category,
+              camp?.presetId,
+              ver?.purpose
+            );
 
-      const winner = allRankings[0];
+            // OD34: Service and marketing steps do NOT compete with each other!
+            if (exEffectivePurpose !== effectivePurpose) {
+              return null;
+            }
+
+            let exPriority = 50;
+            if (effectivePurpose === 'SERVICE') {
+              // For service steps: DELIVERED (300) > DISPATCHED (200) > OUTFIT_READY (100)
+              const milestone = ver?.milestone || '';
+              const isDelivered = milestone === 'DELIVERED' || dueEx.executionKey?.includes(':delivered:');
+              const isDispatched = milestone === 'DISPATCHED' || dueEx.executionKey?.includes(':dispatch:');
+              exPriority = isDelivered ? 300 : isDispatched ? 200 : 100;
+            } else {
+              exPriority = ver?.priority ?? (camp?.presetId && settings?.priorityAllowlistRanges?.[camp.presetId]) ?? 50;
+            }
+
+            return {
+              executionId: dueEx.executionId,
+              priority: exPriority,
+              expiresAt: new Date(dueEx.expiresAt).getTime(),
+              createdAt: new Date(dueEx.createdAt).getTime(),
+            };
+          })
+        )
+      ).filter(Boolean) as any[];
+
+      if (competitorRankings.length > 0) {
+        let myPriority = 50;
+        if (effectivePurpose === 'SERVICE') {
+          const milestone = version?.milestone || '';
+          const isDelivered = milestone === 'DELIVERED' || execution.executionKey?.includes(':delivered:');
+          const isDispatched = milestone === 'DISPATCHED' || execution.executionKey?.includes(':dispatch:');
+          myPriority = isDelivered ? 300 : isDispatched ? 200 : 100;
+        } else {
+          myPriority = version?.priority ?? (campaign?.presetId && settings?.priorityAllowlistRanges?.[campaign.presetId]) ?? 80;
+        }
+
+        const myRanking = {
+          executionId: execution.executionId,
+          priority: myPriority,
+          expiresAt: new Date(execution.expiresAt).getTime(),
+          createdAt: new Date((execution as any).createdAt || serverNow).getTime(),
+        };
+
+        const allRankings = [myRanking, ...competitorRankings];
+        allRankings.sort((a, b) => {
+          if (b.priority !== a.priority) return b.priority - a.priority;
+          if (a.expiresAt !== b.expiresAt) return a.expiresAt - b.expiresAt;
+          if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
+          return a.executionId.localeCompare(b.executionId);
+        });
+
+        const winner = allRankings[0];
       if (winner.executionId !== execution.executionId) {
         // Current execution lost collision arbitration to a higher-ranked step!
         logger.info(
@@ -864,6 +994,7 @@ export class WorkerService {
         );
       }
     }
+  }
 
     // 4. Capacity check against campaignContactGates
     const capCheck = await contactGateService.checkCapacity(

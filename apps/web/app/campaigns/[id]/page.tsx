@@ -38,6 +38,7 @@ import {
   ChevronRight,
   X,
   Scissors,
+  Truck,
 } from 'lucide-react';
 import {
   Campaign,
@@ -380,6 +381,32 @@ export default function CampaignEditorPage() {
   const [faPreview, setFaPreview] = useState<any | null>(null);
   const [faPreviewLoading, setFaPreviewLoading] = useState(false);
   const [faPreviewError, setFaPreviewError] = useState<string | null>(null);
+
+  // Outfit Collection / Delivery Preview State (F31)
+  const [fulfilmentOrderId, setFulfilmentOrderId] = useState('ord_ful_01');
+  const [fulfilmentPreview, setFulfilmentPreview] = useState<any | null>(null);
+  const [fulfilmentPreviewLoading, setFulfilmentPreviewLoading] = useState(false);
+  const [fulfilmentPreviewError, setFulfilmentPreviewError] = useState<string | null>(null);
+
+  const runFulfilmentPreview = async () => {
+    if (!campaign) return;
+    setFulfilmentPreviewLoading(true);
+    setFulfilmentPreviewError(null);
+    try {
+      const response = await fetch(`/api/campaigns/${campaign.campaignId}/fulfilment/preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: fulfilmentOrderId.trim() }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'Unable to preview fulfilment candidate');
+      setFulfilmentPreview(payload);
+    } catch (error) {
+      setFulfilmentPreviewError(error instanceof Error ? error.message : 'Unable to preview fulfilment candidate');
+    } finally {
+      setFulfilmentPreviewLoading(false);
+    }
+  };
 
   const runFaPreview = async () => {
     if (!campaign) return;
@@ -1684,7 +1711,9 @@ export default function CampaignEditorPage() {
                     type="text"
                     disabled
                     value={
-                      draft.trigger.type === 'ORDER_EVENT_DELAY' || (draft.trigger as any)?.anchor === 'ORDER_COMPLETED_AT'
+                      draft.trigger.type === 'FULFILMENT_MILESTONE' || campaign?.presetId === 'outfit_collection_delivery' || campaign?.presetId === 'OUTFIT_COLLECTION_DELIVERY' || campaign?.presetId === 'outfit_fulfilment' || campaign?.presetId === 'fulfilment_milestone' || campaign?.presetId === 'outfit_collection'
+                        ? 'FULFILMENT_MILESTONE (Outfit Collection / Delivery Milestone)'
+                        : draft.trigger.type === 'ORDER_EVENT_DELAY' || (draft.trigger as any)?.anchor === 'ORDER_COMPLETED_AT'
                         ? 'ORDER_EVENT_DELAY (Outfit Completion Delay)'
                         : draft.trigger.type === 'ENQUIRY_EVENT_DELAY' || (draft.trigger as any)?.anchor === 'ENQUIRY_LAST_INTERACTION'
                         ? 'ENQUIRY_EVENT_DELAY (Unresolved Customer Enquiry Follow-Up)'
@@ -1710,7 +1739,164 @@ export default function CampaignEditorPage() {
                   />
                 </div>
 
-                {draft.trigger.type === 'ENQUIRY_EVENT_DELAY' || (draft.trigger as any)?.anchor === 'ENQUIRY_LAST_INTERACTION' ? (
+                {draft.trigger.type === 'FULFILMENT_MILESTONE' || campaign?.presetId === 'outfit_collection_delivery' || campaign?.presetId === 'OUTFIT_COLLECTION_DELIVERY' || campaign?.presetId === 'outfit_fulfilment' || campaign?.presetId === 'fulfilment_milestone' || campaign?.presetId === 'outfit_collection' ? (
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#fff', marginBottom: 6 }}>
+                          Fulfilment Milestone
+                        </label>
+                        <select
+                          id="select-fulfilment-milestone"
+                          value={(draft.trigger as any)?.milestone || (draft as any)?.milestone || 'OUTFIT_READY'}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setDraft({
+                              ...draft,
+                              milestone: val,
+                              trigger: {
+                                ...draft.trigger,
+                                milestone: val,
+                              },
+                            } as any);
+                            setSaveStatus('unsaved');
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '10px 14px',
+                            borderRadius: 8,
+                            backgroundColor: '#111827',
+                            border: '1px solid var(--border-color)',
+                            color: '#fff',
+                            fontSize: '0.875rem',
+                            colorScheme: 'dark',
+                          }}
+                        >
+                          <option value="OUTFIT_READY">Outfit Ready (In-store pickup / completion notice &amp; reminders)</option>
+                          <option value="DISPATCHED">Dispatched (Courier shipment tracking dispatch notification)</option>
+                          <option value="DELIVERED">Delivered (Successful delivery confirmation notice)</option>
+                        </select>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                          Trigger fires when OMS or courier updates the order to this milestone status.
+                        </span>
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#fff', marginBottom: 6 }}>
+                          Fulfilment Mode Filter
+                        </label>
+                        <select
+                          id="select-fulfilment-mode"
+                          value={typeof (draft.trigger as any)?.fulfilmentFilter === 'string' ? (draft.trigger as any)?.fulfilmentFilter : (draft.trigger as any)?.fulfilmentFilter?.mode || 'PICKUP'}
+                          onChange={(e) => {
+                            const modeVal = e.target.value;
+                            setDraft({
+                              ...draft,
+                              fulfilmentFilter: {
+                                ...(typeof (draft as any).fulfilmentFilter === 'object' ? (draft as any).fulfilmentFilter : {}),
+                                mode: modeVal,
+                              },
+                              trigger: {
+                                ...draft.trigger,
+                                fulfilmentFilter: {
+                                  ...(typeof (draft.trigger as any)?.fulfilmentFilter === 'object' ? (draft.trigger as any).fulfilmentFilter : {}),
+                                  mode: modeVal,
+                                },
+                              },
+                            } as any);
+                            setSaveStatus('unsaved');
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '10px 14px',
+                            borderRadius: 8,
+                            backgroundColor: '#111827',
+                            border: '1px solid var(--border-color)',
+                            color: '#fff',
+                            fontSize: '0.875rem',
+                            colorScheme: 'dark',
+                          }}
+                        >
+                          <option value="PICKUP">PICKUP (Store pickup only; skip delivery orders)</option>
+                          <option value="DELIVERY">DELIVERY (Courier shipments only; skip pickup orders)</option>
+                          <option value="ANY">ANY (Both pickup and courier delivery orders eligible)</option>
+                        </select>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                          Filter by fulfillment route. Hard Rule: If delivery is arranged, pickup instructions are never sent.
+                        </span>
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#fff', marginBottom: 6 }}>
+                          Useful Window (Days from ready / event)
+                        </label>
+                        <input
+                          id="input-fulfilment-useful-days"
+                          type="number"
+                          min={1}
+                          max={60}
+                          value={(draft as any).usefulForDays ?? (draft.trigger as any)?.usefulForDays ?? 14}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10) || 14;
+                            setDraft({
+                              ...draft,
+                              usefulForDays: Math.min(60, Math.max(1, val)),
+                              trigger: {
+                                ...draft.trigger,
+                                usefulForDays: Math.min(60, Math.max(1, val)),
+                              },
+                            } as any);
+                            setSaveStatus('unsaved');
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '10px 14px',
+                            borderRadius: 8,
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid var(--border-color)',
+                            color: '#fff',
+                            fontSize: '0.9rem',
+                          }}
+                        />
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                          Reminders scheduled past this window expire automatically (1–60 days, default 14).
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* F31 Static Policy & Compliance Notice */}
+                    <div
+                      style={{
+                        padding: '14px 18px',
+                        borderRadius: 8,
+                        background: 'rgba(56, 189, 248, 0.08)',
+                        border: '1px solid rgba(56, 189, 248, 0.25)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 8,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.85rem', color: '#7dd3fc' }}>
+                        <Info size={16} color="#38bdf8" />
+                        <span>Order Fulfilment Service Principles &amp; WhatsApp Compliance</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10, fontSize: '0.8rem', color: '#e0f2fe' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                          <span style={{ color: '#38bdf8', fontWeight: 700 }}>1.</span>
+                          <span><strong>Meta UTILITY Only:</strong> Order status messages operate under SERVICE purpose and Meta UTILITY templates. Promotional wording and offers are strictly prohibited.</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                          <span style={{ color: '#38bdf8', fontWeight: 700 }}>2.</span>
+                          <span><strong>Contact Caps &amp; Spacing:</strong> Service messages do not consume marketing caps. A minimum 24h spacing applies between uncollected reminders.</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                          <span style={{ color: '#38bdf8', fontWeight: 700 }}>3.</span>
+                          <span><strong>Quiet Hours &amp; Staleness:</strong> Messages scheduled outside 10:00–19:00 defer to next morning at 10:00. Changed customer address or readiness version cancels stale intent.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : draft.trigger.type === 'ENQUIRY_EVENT_DELAY' || (draft.trigger as any)?.anchor === 'ENQUIRY_LAST_INTERACTION' ? (
                   <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
                       <div>
@@ -3805,6 +3991,14 @@ export default function CampaignEditorPage() {
                                         )}
                                       </div>
                                     )}
+
+                                    {/* Helper hint for order & shipment variables */}
+                                    {(selectedSource === 'order.number' || selectedSource === 'shipment.carrierName' || selectedSource === 'shipment.trackingRef') && (
+                                      <div style={{ fontSize: '0.75rem', color: '#38bdf8', paddingLeft: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <Info size={12} />
+                                        <span>Authoritative source variable: {selectedSource} is resolved directly from fulfilment data at dispatch and requires no fallback literal.</span>
+                                      </div>
+                                    )}
                                   </div>
                                 );
                               })}
@@ -5452,6 +5646,80 @@ export default function CampaignEditorPage() {
 
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.76rem', marginTop: 12, marginBottom: 0 }}>
                     Step 1 Confirmation sends immediately on booking. Step 2 Reminder delivers 24h prior to appointment. On rescheduling, reminder dueAt automatically shifts and bumps planRevision.
+                  </p>
+                </div>
+              )}
+
+              {/* F31: Outfit Collection / Delivery Review */}
+              {campaign && (campaign.presetId === 'outfit_collection_delivery' || campaign.presetId === 'OUTFIT_COLLECTION_DELIVERY' || campaign.presetId === 'outfit_fulfilment' || campaign.presetId === 'fulfilment_milestone' || campaign.presetId === 'outfit_collection') && (
+                <div className="glass-panel" style={{ padding: 18, marginTop: 16, border: '1px solid rgba(56, 189, 248, 0.35)', background: 'rgba(56, 189, 248, 0.04)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <Truck size={18} color="#38bdf8" />
+                    <h3 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', fontWeight: 700 }}>Outfit Collection / Delivery Review (F31)</h3>
+                    <span className="badge badge-ACTIVE" style={{ fontSize: '0.7rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }}>SERVICE CATEGORY</span>
+                  </div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: 1.5, marginBottom: 12 }}>
+                    Authoritative order milestone tracking sequence covering <strong>Outfit Ready for Pickup</strong>, <strong>Courier Dispatched</strong>, and <strong>Delivered</strong> events.
+                    Operates strictly under Meta <strong>UTILITY</strong> rules with service spacing (24h default) without consuming marketing contact caps.
+                  </p>
+
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <input
+                      className="input-field"
+                      value={fulfilmentOrderId}
+                      onChange={(event) => setFulfilmentOrderId(event.target.value)}
+                      aria-label="Order ID"
+                      placeholder="ord_ful_01"
+                      style={{ minWidth: 220 }}
+                    />
+                    <button type="button" className="btn btn-primary" onClick={runFulfilmentPreview} disabled={fulfilmentPreviewLoading}>
+                      {fulfilmentPreviewLoading ? 'Evaluating...' : 'Test Fulfilment Matching'}
+                    </button>
+                  </div>
+
+                  {fulfilmentPreviewError && <p style={{ color: 'var(--accent-rose)', fontSize: '0.82rem', marginTop: 8 }}>{fulfilmentPreviewError}</p>}
+                  {fulfilmentPreview && (
+                    <div style={{ marginTop: 14, padding: 14, borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.07)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                        <strong style={{ color: '#fff', fontSize: '0.92rem' }}>
+                          Order: {fulfilmentPreview.fulfilment?.orderNumber || fulfilmentPreview.fulfilment?.orderId || 'N/A'} ({fulfilmentPreview.fulfilment?.mode || 'PICKUP'})
+                        </strong>
+                        <span className={`badge ${fulfilmentPreview.wouldEnroll ? 'badge-ACTIVE' : 'badge-PAUSED'}`}>
+                          {fulfilmentPreview.wouldEnroll ? 'ELIGIBLE' : fulfilmentPreview.reason || 'EXCLUDED'}
+                        </span>
+                      </div>
+                      <div style={{ marginTop: 8, display: 'flex', gap: 16, color: 'var(--text-secondary)', fontSize: '0.82rem', flexWrap: 'wrap' }}>
+                        <span>Status: <strong>{fulfilmentPreview.fulfilment?.status || 'N/A'}</strong></span>
+                        <span>Readiness Version: <strong>v{fulfilmentPreview.fulfilment?.readinessVersion ?? 1}</strong></span>
+                        <span>Entity Version: <strong>v{fulfilmentPreview.fulfilment?.entityVersion ?? 1}</strong></span>
+                        {fulfilmentPreview.shipment && (
+                          <>
+                            <span>Carrier: <strong>{fulfilmentPreview.shipment.carrierName || 'N/A'}</strong></span>
+                            <span>Tracking: <strong>{fulfilmentPreview.shipment.trackingRef || 'N/A'}</strong></span>
+                          </>
+                        )}
+                      </div>
+                      {fulfilmentPreview.reasonText && (
+                        <div style={{ marginTop: 8, fontSize: '0.78rem', color: fulfilmentPreview.wouldEnroll ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
+                          {fulfilmentPreview.reasonText}
+                        </div>
+                      )}
+                      {fulfilmentPreview.steps && fulfilmentPreview.steps.length > 0 && (
+                        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Planned Campaign Steps:</span>
+                          {fulfilmentPreview.steps.map((st: any, sIdx: number) => (
+                            <div key={sIdx} style={{ fontSize: '0.75rem', padding: '6px 10px', borderRadius: 4, background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>{st.stepName || st.stepId} (Template: {st.templateId})</span>
+                              <span style={{ color: 'var(--text-muted)' }}>Due: {st.dueAt ? new Date(st.dueAt).toLocaleString() : 'Immediate'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.76rem', marginTop: 12, marginBottom: 0 }}>
+                    Orders ready for collection trigger immediate ready notices; uncollected reminders follow up at configured days. Rescheduling or collection immediately cancels downstream reminders.
                   </p>
                 </div>
               )}

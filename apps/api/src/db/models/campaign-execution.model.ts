@@ -50,6 +50,7 @@ export interface ICampaignExecution extends Document {
   planRevision: number;
   state: ExecutionState;
   skipReason: string | null;
+  cancellationReason?: string | null;
   prerequisite: Prerequisite;
   templateRef?: {
     id: string;
@@ -215,6 +216,10 @@ const CampaignExecutionSchema = new Schema<ICampaignExecution>(
       required: true,
     },
     skipReason: {
+      type: String,
+      default: null,
+    },
+    cancellationReason: {
       type: String,
       default: null,
     },

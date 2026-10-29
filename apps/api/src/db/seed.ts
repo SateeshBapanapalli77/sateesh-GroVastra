@@ -140,6 +140,9 @@ export const DEV_COLLECTIONS_LIST = [
   'src_connections',
   'src_credits',
   'src_collections',
+  'src_appointments',
+  'src_alterations',
+  'src_fulfilments',
 ];
 
 export function applySeedLabels<T extends Record<string, any>>(
@@ -240,6 +243,7 @@ export async function handleLiveCustomerHandover(
 
   if (allLiveCustIds.length > 0) {
     await SrcOrderModel.deleteMany({ tenantId: 'shop_a', customerId: { $in: allLiveCustIds } }, { session });
+    await mongoose.connection.collection('src_fulfilments').deleteMany({ tenantId: 'shop_a', customerId: { $in: allLiveCustIds } }, { session });
     await SrcCustomerEventModel.deleteMany({ tenantId: 'shop_a', customerId: { $in: allLiveCustIds } }, { session });
     await mongoose.connection.collection('src_enquiries').deleteMany({ tenantId: 'shop_a', customerId: { $in: allLiveCustIds } }, { session });
     await CampaignEnrollmentModel.deleteMany({ tenantId: 'shop_a', customerId: { $in: allLiveCustIds } }, { session });
@@ -299,7 +303,7 @@ export async function resetScenario(scenario: string): Promise<void> {
     await CampaignCustomerFactModel.deleteMany({ customerId: { $in: customerIds } });
   }
 
-  const srcCols = ['src_customers', 'src_customer_events', 'src_orders', 'src_offers', 'src_enquiries', 'src_products'];
+  const srcCols = ['src_customers', 'src_customer_events', 'src_orders', 'src_offers', 'src_enquiries', 'src_products', 'src_appointments', 'src_alterations', 'src_fulfilments'];
   for (const collName of srcCols) {
     await mongoose.connection.collection(collName).deleteMany({ seedGroup: scenario });
   }
@@ -310,6 +314,7 @@ export async function resetScenario(scenario: string): Promise<void> {
     const liveCustIds = liveCusts.map((c: any) => c.customerId);
     if (liveCustIds.length > 0) {
       await SrcOrderModel.deleteMany({ tenantId: 'shop_a', customerId: { $in: liveCustIds } });
+      await mongoose.connection.collection('src_fulfilments').deleteMany({ tenantId: 'shop_a', customerId: { $in: liveCustIds } });
       await SrcCustomerEventModel.deleteMany({ tenantId: 'shop_a', customerId: { $in: liveCustIds } });
       await mongoose.connection.collection('src_enquiries').deleteMany({ tenantId: 'shop_a', customerId: { $in: liveCustIds } });
       await CampaignEnrollmentModel.deleteMany({ tenantId: 'shop_a', customerId: { $in: liveCustIds } });
@@ -387,6 +392,9 @@ export async function seedPurgeMock(confirmed: boolean = false): Promise<{
     'src_enquiries',
     'src_products',
     'src_credits',
+    'src_appointments',
+    'src_alterations',
+    'src_fulfilments',
   ];
 
   for (const collName of mockCollections) {
@@ -425,6 +433,7 @@ export async function seedStatus(): Promise<{
     { name: 'src_customerEvents', col: mongoose.connection.collection('src_customerEvents') },
     { name: 'src_enquiries', col: mongoose.connection.collection('src_enquiries') },
     { name: 'src_products', col: mongoose.connection.collection('src_products') },
+    { name: 'src_fulfilments', col: mongoose.connection.collection('src_fulfilments') },
   ];
 
   const countsBySeedGroup: Record<string, Record<string, number>> = {};
@@ -473,7 +482,7 @@ export async function seedDemo(): Promise<{ liveOwner: string | null }> {
 
   await seedBase();
 
-  const scenarios = ['welcome', 'first-repeat', 'gift-wedding', 'unresolved-enquiry', 'complete-outfit', 'selected-stock-promotion', 'festival-collection'];
+  const scenarios = ['welcome', 'first-repeat', 'gift-wedding', 'unresolved-enquiry', 'complete-outfit', 'selected-stock-promotion', 'festival-collection', 'exhibition-trunk-show', 'fitting-alteration', 'outfit-fulfilment'];
   for (const sc of scenarios) {
     console.log(`\n--- Applying Scenario: ${sc} (without --live) ---`);
     await seedScenario(sc, { live: false });
@@ -505,6 +514,7 @@ async function insertCustomerBatch(
     else if (r.customerId.startsWith('cus_fr_')) docSeedGroup = 'first-repeat';
     else if (r.customerId.startsWith('cus_gw_')) docSeedGroup = 'gift-wedding';
     else if (r.customerId.startsWith('cus_enq_')) docSeedGroup = 'unresolved-enquiry';
+    else if (defaultSeedGroup === 'outfit-fulfilment' || r.customerId.startsWith('cus_of_ful_')) docSeedGroup = 'outfit-fulfilment';
     else if (r.customerId.startsWith('cus_of_')) docSeedGroup = 'complete-outfit';
     else if (r.customerId.startsWith('cus_sp_')) docSeedGroup = 'selected-stock-promotion';
     else if (r.customerId.startsWith('cus_fc_')) docSeedGroup = 'festival-collection';
@@ -4846,6 +4856,891 @@ export async function executeScenarioData(
         }, seedGroup, false)], session);
       }
 
+      if (scenario === 'outfit-fulfilment') {
+        const now = clock.now();
+        const seedGroup = 'outfit-fulfilment';
+        const oldTimestamp = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000); // 60 days ago
+
+        // 14 customers for shop_a
+        const outfitCustomers: any[] = [
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_eligible',
+            firstName: 'Kavita',
+            rawPhone: '+91 98230 00101',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_main',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_opted_out',
+            firstName: 'Pooja',
+            rawPhone: '+91 98230 00102',
+            marketingOptIn: false, // Marketing opt-out: must still receive service messages!
+            channelSuppressed: false,
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_main',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_suppressed',
+            firstName: 'Ananya',
+            rawPhone: '+91 98230 00103',
+            marketingOptIn: true,
+            channelSuppressed: true, // Suppressed: blocks service messages
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_main',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_unverified',
+            firstName: 'Bhavna',
+            rawPhone: '+91 98230 00104',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: false,
+            status: 'ACTIVE',
+            branchId: 'branch_main',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_undeliverable',
+            firstName: 'Deepa',
+            rawPhone: '+91 98230 00105',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            destination: {
+              verified: true,
+              verificationLevel: 'CONFIRMED_BY_STAFF',
+              undeliverable: true,
+              undeliverableReason: 'INVALID_NUMBER',
+            },
+            status: 'ACTIVE',
+            branchId: 'branch_main',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_deleted',
+            firstName: 'Geeta',
+            rawPhone: '+91 98230 00106',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            status: 'DELETED',
+            deletedAt: now,
+            branchId: 'branch_main',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_shared_1',
+            firstName: 'Harini',
+            rawPhone: '+91 98230 00107',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_main',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_shared_2',
+            firstName: 'Ishita',
+            rawPhone: '+91 98230 00107', // Shares phone with shared_1
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_main',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_no_phone',
+            firstName: 'Jaya',
+            rawPhone: '',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: false,
+            status: 'ACTIVE',
+            branchId: 'branch_main',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_pickup_1',
+            firstName: 'Lavanya',
+            rawPhone: '+91 98230 00110',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_main',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_pickup_2',
+            firstName: 'Madhu',
+            rawPhone: '+91 98230 00111',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_two',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_delivery_1',
+            firstName: 'Neha',
+            rawPhone: '+91 98230 00112',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_main',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_delivery_2',
+            firstName: 'Pallavi',
+            rawPhone: '+91 98230 00113',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_two',
+            tags: ['service', 'fulfilment'],
+          },
+          {
+            tenantId: 'shop_a',
+            customerId: 'cus_of_ful_partial',
+            firstName: 'Radha',
+            rawPhone: '+91 98230 00114',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_main',
+            tags: ['service', 'fulfilment'],
+          },
+        ];
+        await insertCustomerBatch('shop_a', outfitCustomers, seedGroup, session);
+
+        // 3 customers for shop_b (tenant isolation)
+        const shopBCustomers = [
+          {
+            tenantId: 'shop_b',
+            customerId: 'cus_of_ful_b_01',
+            firstName: 'Bhavna B',
+            rawPhone: '+91 98231 00201',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_b_main',
+            tags: ['service'],
+          },
+          {
+            tenantId: 'shop_b',
+            customerId: 'cus_of_ful_b_02',
+            firstName: 'Bindu B',
+            rawPhone: '+91 98231 00202',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_b_main',
+            tags: ['service'],
+          },
+          {
+            tenantId: 'shop_b',
+            customerId: 'cus_of_ful_b_03',
+            firstName: 'Bela B',
+            rawPhone: '+91 98231 00203',
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            status: 'ACTIVE',
+            branchId: 'branch_b_main',
+            tags: ['service'],
+          },
+        ];
+        await insertCustomerBatch('shop_b', shopBCustomers as any, seedGroup, session);
+
+        // 16 fulfilment records for shop_a
+        const fulfilments: any[] = [
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_pickup_not_ready_1',
+            customerId: 'cus_of_ful_eligible',
+            branchId: 'branch_main',
+            orderNumber: 'ORD-OF-101',
+            mode: 'PICKUP',
+            status: 'NOT_READY',
+            readinessKind: null,
+            readinessVersion: 0,
+            readyAt: null,
+            collectedAt: null,
+            entityVersion: 1,
+            shipments: [],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_pickup_not_ready_2',
+            customerId: 'cus_of_ful_pickup_1',
+            branchId: 'branch_main',
+            orderNumber: 'ORD-OF-102',
+            mode: 'PICKUP',
+            status: 'NOT_READY',
+            readinessKind: null,
+            readinessVersion: 0,
+            readyAt: null,
+            collectedAt: null,
+            entityVersion: 1,
+            shipments: [],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_delivery_not_ready_1',
+            customerId: 'cus_of_ful_eligible',
+            branchId: 'branch_main',
+            orderNumber: 'ORD-OF-201',
+            mode: 'DELIVERY',
+            status: 'NOT_READY',
+            readinessKind: null,
+            readinessVersion: 0,
+            readyAt: null,
+            collectedAt: null,
+            entityVersion: 1,
+            shipments: [],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_delivery_not_ready_2',
+            customerId: 'cus_of_ful_delivery_1',
+            branchId: 'branch_two',
+            orderNumber: 'ORD-OF-202',
+            mode: 'DELIVERY',
+            status: 'NOT_READY',
+            readinessKind: null,
+            readinessVersion: 0,
+            readyAt: null,
+            collectedAt: null,
+            entityVersion: 1,
+            shipments: [],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_old_ready',
+            customerId: 'cus_of_ful_pickup_2',
+            branchId: 'branch_main',
+            orderNumber: 'ORD-OF-OLD-01',
+            mode: 'PICKUP',
+            status: 'READY_FOR_COLLECTION',
+            readinessKind: 'FULL',
+            readinessVersion: 1,
+            readyAt: oldTimestamp,
+            collectedAt: null,
+            entityVersion: 1,
+            shipments: [],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_old_partial',
+            customerId: 'cus_of_ful_partial',
+            branchId: 'branch_main',
+            orderNumber: 'ORD-OF-OLD-02',
+            mode: 'PICKUP',
+            status: 'PARTIALLY_READY',
+            readinessKind: 'PARTIAL',
+            readinessVersion: 1,
+            readyAt: oldTimestamp,
+            collectedAt: null,
+            entityVersion: 1,
+            shipments: [],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_old_collected',
+            customerId: 'cus_of_ful_pickup_1',
+            branchId: 'branch_main',
+            orderNumber: 'ORD-OF-OLD-03',
+            mode: 'PICKUP',
+            status: 'COLLECTED',
+            readinessKind: 'FULL',
+            readinessVersion: 1,
+            readyAt: new Date(oldTimestamp.getTime() - 5 * 86400000),
+            collectedAt: new Date(oldTimestamp.getTime() - 2 * 86400000),
+            entityVersion: 2,
+            shipments: [],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_old_delivered',
+            customerId: 'cus_of_ful_delivery_1',
+            branchId: 'branch_main',
+            orderNumber: 'ORD-OF-OLD-04',
+            mode: 'DELIVERY',
+            status: 'DELIVERED',
+            readinessKind: null,
+            readinessVersion: 0,
+            readyAt: null,
+            collectedAt: null,
+            entityVersion: 2,
+            shipments: [
+              {
+                shipmentId: 'shp_of_old_01',
+                carrier: 'BLUE_DART',
+                carrierName: 'Blue Dart',
+                trackingRef: 'BD-OLD-12345',
+                status: 'DELIVERED',
+                verified: true,
+                dispatchedAt: new Date(oldTimestamp.getTime() - 5 * 86400000),
+                deliveredAt: new Date(oldTimestamp.getTime() - 2 * 86400000),
+                entityVersion: 2,
+              },
+            ],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_old_cancelled',
+            customerId: 'cus_of_ful_eligible',
+            branchId: 'branch_main',
+            orderNumber: 'ORD-OF-OLD-05',
+            mode: 'PICKUP',
+            status: 'CANCELLED',
+            readinessKind: null,
+            readinessVersion: 0,
+            readyAt: null,
+            collectedAt: null,
+            entityVersion: 2,
+            shipments: [],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_old_rework',
+            customerId: 'cus_of_ful_eligible',
+            branchId: 'branch_main',
+            orderNumber: 'ORD-OF-OLD-06',
+            mode: 'PICKUP',
+            status: 'REWORK',
+            readinessKind: 'FULL',
+            readinessVersion: 1,
+            readyAt: new Date(oldTimestamp.getTime() - 5 * 86400000),
+            collectedAt: null,
+            entityVersion: 2,
+            shipments: [],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_old_returned',
+            customerId: 'cus_of_ful_delivery_2',
+            branchId: 'branch_two',
+            orderNumber: 'ORD-OF-OLD-07',
+            mode: 'DELIVERY',
+            status: 'RETURNED',
+            readinessKind: null,
+            readinessVersion: 0,
+            readyAt: null,
+            collectedAt: null,
+            entityVersion: 2,
+            shipments: [],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_shp_label',
+            customerId: 'cus_of_ful_delivery_1',
+            branchId: 'branch_main',
+            orderNumber: 'ORD-OF-SHP-01',
+            mode: 'DELIVERY',
+            status: 'NOT_READY',
+            readinessKind: null,
+            readinessVersion: 0,
+            readyAt: null,
+            collectedAt: null,
+            entityVersion: 1,
+            shipments: [
+              {
+                shipmentId: 'shp_of_lbl_01',
+                carrier: 'DELHIVERY',
+                carrierName: 'Delhivery',
+                trackingRef: 'DEL-LBL-01',
+                status: 'LABEL_CREATED',
+                verified: false,
+                entityVersion: 1,
+              },
+            ],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_shp_dispatched',
+            customerId: 'cus_of_ful_delivery_2',
+            branchId: 'branch_two',
+            orderNumber: 'ORD-OF-SHP-02',
+            mode: 'DELIVERY',
+            status: 'NOT_READY',
+            readinessKind: null,
+            readinessVersion: 0,
+            readyAt: null,
+            collectedAt: null,
+            entityVersion: 1,
+            shipments: [
+              {
+                shipmentId: 'shp_of_dsp_01',
+                carrier: 'DELHIVERY',
+                carrierName: 'Delhivery',
+                trackingRef: 'DEL-DSP-01',
+                status: 'DISPATCHED',
+                verified: true,
+                dispatchedAt: oldTimestamp,
+                entityVersion: 1,
+              },
+            ],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_shp_failed',
+            customerId: 'cus_of_ful_delivery_2',
+            branchId: 'branch_two',
+            orderNumber: 'ORD-OF-SHP-03',
+            mode: 'DELIVERY',
+            status: 'NOT_READY',
+            readinessKind: null,
+            readinessVersion: 0,
+            readyAt: null,
+            collectedAt: null,
+            entityVersion: 2,
+            shipments: [
+              {
+                shipmentId: 'shp_of_fld_01',
+                carrier: 'BLUE_DART',
+                carrierName: 'Blue Dart',
+                trackingRef: 'BD-FLD-01',
+                status: 'FAILED',
+                verified: true,
+                dispatchedAt: oldTimestamp,
+                entityVersion: 2,
+              },
+            ],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_anonymous',
+            customerId: null,
+            branchId: 'branch_main',
+            orderNumber: 'ORD-OF-ANON-01',
+            mode: 'PICKUP',
+            status: 'READY_FOR_COLLECTION',
+            readinessKind: 'FULL',
+            readinessVersion: 1,
+            readyAt: oldTimestamp,
+            collectedAt: null,
+            entityVersion: 1,
+            shipments: [],
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            orderId: 'ord_of_pickup_opted_out',
+            customerId: 'cus_of_ful_opted_out',
+            branchId: 'branch_main',
+            orderNumber: 'ORD-OF-301',
+            mode: 'PICKUP',
+            status: 'NOT_READY',
+            readinessKind: null,
+            readinessVersion: 0,
+            readyAt: null,
+            collectedAt: null,
+            entityVersion: 1,
+            shipments: [],
+            seedGroup,
+          },
+        ];
+
+        if (options.live) {
+          const liveCust: any = await SrcCustomerModel.findOne({ tenantId: 'shop_a', isLive: true }).session(session).lean();
+          if (liveCust) {
+            fulfilments.push(
+              {
+                tenantId: 'shop_a',
+                orderId: 'ord_of_live_pickup',
+                customerId: liveCust.customerId,
+                branchId: 'branch_main',
+                orderNumber: 'ORD-OF-LIVE-01',
+                mode: 'PICKUP',
+                status: 'NOT_READY',
+                readinessKind: null,
+                readinessVersion: 0,
+                readyAt: null,
+                collectedAt: null,
+                entityVersion: 1,
+                shipments: [],
+                seedGroup,
+              },
+              {
+                tenantId: 'shop_a',
+                orderId: 'ord_of_live_delivery',
+                customerId: liveCust.customerId,
+                branchId: 'branch_main',
+                orderNumber: 'ORD-OF-LIVE-02',
+                mode: 'DELIVERY',
+                status: 'NOT_READY',
+                readinessKind: null,
+                readinessVersion: 0,
+                readyAt: null,
+                collectedAt: null,
+                entityVersion: 1,
+                shipments: [],
+                seedGroup,
+              }
+            );
+          }
+        }
+
+        await upsertMany('src_fulfilments', ['tenantId', 'orderId'], fulfilments, session);
+
+        // Seed corresponding orders in src_orders
+        const srcOrders = fulfilments.filter(f => f.customerId).map(f => ({
+          tenantId: f.tenantId,
+          orderId: f.orderId,
+          customerId: f.customerId,
+          status: 'CONFIRMED',
+          paid: true,
+          netPaise: 500000,
+          occasionRef: null,
+          lines: [
+            {
+              lineId: `line_${f.orderId}_1`,
+              productId: 'prod_saree_silk',
+              category: 'saree',
+              productName: 'Raw Silk Festive Ensemble',
+              pricePaise: 500000,
+              quantity: 1,
+            },
+          ],
+          entityVersion: 1,
+          completedAt: null,
+          branchId: f.branchId,
+        }));
+        await upsertMany('src_orders', ['tenantId', 'orderId'], applySeedLabels(srcOrders, seedGroup, true), session);
+
+        // 3 ACTIVE Campaigns + 1 DRAFT Campaign
+        // 1. cmp_outfit_ready (ACTIVE)
+        await upsertMany('campaigns', ['tenantId', 'campaignId'], [applySeedLabels({
+          campaignId: 'cmp_outfit_ready',
+          tenantId: 'shop_a',
+          name: 'Outfit Ready for Collection',
+          presetId: 'outfit_collection_delivery',
+          status: 'ACTIVE',
+          activeVersionId: 'ver_outfit_ready_1',
+          draftVersion: 1,
+          pauseGeneration: 0,
+          enabledBranches: ['branch_main', 'branch_two'],
+          startAt: null,
+          activatedAt: now,
+          endAt: null,
+        }, seedGroup, false)], session);
+
+        await upsertMany('campaignVersions', ['tenantId', 'campaignId', 'version'], [applySeedLabels({
+          campaignId: 'cmp_outfit_ready',
+          tenantId: 'shop_a',
+          version: 1,
+          name: 'Outfit Ready for Collection',
+          presetId: 'outfit_collection_delivery',
+          purpose: 'SERVICE',
+          category: 'SERVICE',
+          priority: 60,
+          trigger: {
+            type: 'FULFILMENT_MILESTONE',
+            anchor: 'FULFILMENT_READY_AT',
+            milestone: 'OUTFIT_READY',
+            fulfilmentFilter: 'PICKUP',
+            usefulForDays: 14,
+          },
+          audience: { mode: 'ALL_ELIGIBLE', rules: null },
+          audienceMode: 'ALL_ELIGIBLE',
+          matchMode: 'STRICT',
+          steps: [
+            {
+              stepId: 'ready_notice',
+              stepName: 'Outfit Ready Notice',
+              offsetDays: 0,
+              delayMinutes: 0,
+              localTime: '10:00',
+              delay: { value: 0, unit: 'MINUTES' },
+              prerequisite: 'NONE',
+              outsideHoursPolicy: 'DEFER_NEXT_DAY',
+              maxDeferralHours: 16,
+              maxLatenessMinutes: 360,
+              stopOnReply: false,
+              stopOnGoal: true,
+              templateRef: { id: 'tpl_fulfil_ready', name: 'tpl_fulfil_ready', language: 'en', revision: 1 },
+              bindings: {
+                '1': { source: 'customer.firstName' },
+                '2': { source: 'shop.displayName' },
+                '3': { source: 'order.number' },
+              },
+            },
+            {
+              stepId: 'uncollected_reminder',
+              stepName: 'Uncollected Outfit Reminder',
+              offsetDays: 3,
+              delayMinutes: 4320,
+              localTime: '10:00',
+              delay: { value: 3, unit: 'DAYS' },
+              prerequisite: 'NONE',
+              outsideHoursPolicy: 'DEFER_NEXT_DAY',
+              maxDeferralHours: 16,
+              maxLatenessMinutes: 360,
+              stopOnReply: true,
+              stopOnGoal: true,
+              templateRef: { id: 'tpl_fulfil_reminder', name: 'tpl_fulfil_reminder', language: 'en', revision: 1 },
+              bindings: {
+                '1': { source: 'customer.firstName' },
+                '2': { source: 'shop.displayName' },
+                '3': { source: 'order.number' },
+              },
+            },
+          ],
+          enabledBranches: ['branch_main', 'branch_two'],
+          timezone: 'Asia/Kolkata',
+          bindingsSchemaVersion: 2,
+          isPublished: true,
+          publishedAt: now,
+        }, seedGroup, false)], session);
+
+        // 2. cmp_delivery_dispatched (ACTIVE)
+        await upsertMany('campaigns', ['tenantId', 'campaignId'], [applySeedLabels({
+          campaignId: 'cmp_delivery_dispatched',
+          tenantId: 'shop_a',
+          name: 'Delivery Dispatched Update',
+          presetId: 'outfit_collection_delivery',
+          status: 'ACTIVE',
+          activeVersionId: 'ver_delivery_dispatched_1',
+          draftVersion: 1,
+          pauseGeneration: 0,
+          enabledBranches: ['branch_main', 'branch_two'],
+          startAt: null,
+          activatedAt: now,
+          endAt: null,
+        }, seedGroup, false)], session);
+
+        await upsertMany('campaignVersions', ['tenantId', 'campaignId', 'version'], [applySeedLabels({
+          campaignId: 'cmp_delivery_dispatched',
+          tenantId: 'shop_a',
+          version: 1,
+          name: 'Delivery Dispatched Update',
+          presetId: 'outfit_collection_delivery',
+          purpose: 'SERVICE',
+          category: 'SERVICE',
+          priority: 60,
+          trigger: {
+            type: 'FULFILMENT_MILESTONE',
+            anchor: 'SHIPMENT_DISPATCHED_AT',
+            milestone: 'DISPATCHED',
+            fulfilmentFilter: 'DELIVERY',
+          },
+          audience: { mode: 'ALL_ELIGIBLE', rules: null },
+          audienceMode: 'ALL_ELIGIBLE',
+          matchMode: 'STRICT',
+          steps: [
+            {
+              stepId: 'dispatch_notice',
+              stepName: 'Dispatched Notice',
+              offsetDays: 0,
+              delayMinutes: 0,
+              localTime: '10:00',
+              delay: { value: 0, unit: 'MINUTES' },
+              prerequisite: 'NONE',
+              outsideHoursPolicy: 'DEFER_NEXT_DAY',
+              maxDeferralHours: 16,
+              maxLatenessMinutes: 240,
+              stopOnReply: false,
+              stopOnGoal: true,
+              templateRef: { id: 'tpl_fulfil_dispatched', name: 'tpl_fulfil_dispatched', language: 'en', revision: 1 },
+              bindings: {
+                '1': { source: 'customer.firstName' },
+                '2': { source: 'shop.displayName' },
+                '3': { source: 'order.number' },
+                '4': { source: 'shipment.carrierName' },
+                '5': { source: 'shipment.trackingRef' },
+              },
+            },
+          ],
+          enabledBranches: ['branch_main', 'branch_two'],
+          timezone: 'Asia/Kolkata',
+          bindingsSchemaVersion: 2,
+          isPublished: true,
+          publishedAt: now,
+        }, seedGroup, false)], session);
+
+        // 3. cmp_delivery_delivered (ACTIVE)
+        await upsertMany('campaigns', ['tenantId', 'campaignId'], [applySeedLabels({
+          campaignId: 'cmp_delivery_delivered',
+          tenantId: 'shop_a',
+          name: 'Delivery Completed Update',
+          presetId: 'outfit_collection_delivery',
+          status: 'ACTIVE',
+          activeVersionId: 'ver_delivery_delivered_1',
+          draftVersion: 1,
+          pauseGeneration: 0,
+          enabledBranches: ['branch_main', 'branch_two'],
+          startAt: null,
+          activatedAt: now,
+          endAt: null,
+        }, seedGroup, false)], session);
+
+        await upsertMany('campaignVersions', ['tenantId', 'campaignId', 'version'], [applySeedLabels({
+          campaignId: 'cmp_delivery_delivered',
+          tenantId: 'shop_a',
+          version: 1,
+          name: 'Delivery Completed Update',
+          presetId: 'outfit_collection_delivery',
+          purpose: 'SERVICE',
+          category: 'SERVICE',
+          priority: 60,
+          trigger: {
+            type: 'FULFILMENT_MILESTONE',
+            anchor: 'SHIPMENT_DELIVERED_AT',
+            milestone: 'DELIVERED',
+            fulfilmentFilter: 'DELIVERY',
+          },
+          audience: { mode: 'ALL_ELIGIBLE', rules: null },
+          audienceMode: 'ALL_ELIGIBLE',
+          matchMode: 'STRICT',
+          steps: [
+            {
+              stepId: 'delivery_notice',
+              stepName: 'Delivered Notice',
+              offsetDays: 0,
+              delayMinutes: 0,
+              localTime: '10:00',
+              delay: { value: 0, unit: 'MINUTES' },
+              prerequisite: 'NONE',
+              outsideHoursPolicy: 'DEFER_NEXT_DAY',
+              maxDeferralHours: 16,
+              maxLatenessMinutes: 240,
+              stopOnReply: false,
+              stopOnGoal: true,
+              templateRef: { id: 'tpl_fulfil_delivered', name: 'tpl_fulfil_delivered', language: 'en', revision: 1 },
+              bindings: {
+                '1': { source: 'customer.firstName' },
+                '2': { source: 'shop.displayName' },
+                '3': { source: 'order.number' },
+              },
+            },
+          ],
+          enabledBranches: ['branch_main', 'branch_two'],
+          timezone: 'Asia/Kolkata',
+          bindingsSchemaVersion: 2,
+          isPublished: true,
+          publishedAt: now,
+        }, seedGroup, false)], session);
+
+        // 4. cmp_outfit_ready_partial (DRAFT)
+        await upsertMany('campaigns', ['tenantId', 'campaignId'], [applySeedLabels({
+          campaignId: 'cmp_outfit_ready_partial',
+          tenantId: 'shop_a',
+          name: 'Outfit Partial Ready (Draft)',
+          presetId: 'outfit_collection_delivery',
+          status: 'DRAFT',
+          draftVersion: 1,
+          pauseGeneration: 0,
+          enabledBranches: ['branch_main'],
+          startAt: null,
+          endAt: null,
+        }, seedGroup, false)], session);
+
+        await upsertMany('campaignVersions', ['tenantId', 'campaignId', 'version'], [applySeedLabels({
+          campaignId: 'cmp_outfit_ready_partial',
+          tenantId: 'shop_a',
+          version: 1,
+          name: 'Outfit Partial Ready (Draft)',
+          presetId: 'outfit_collection_delivery',
+          purpose: 'SERVICE',
+          category: 'SERVICE',
+          priority: 60,
+          trigger: {
+            type: 'FULFILMENT_MILESTONE',
+            anchor: 'FULFILMENT_READY_AT',
+            milestone: 'OUTFIT_READY',
+            fulfilmentFilter: 'PICKUP',
+            partialReadyTemplateRef: { id: 'tpl_fulfil_ready_partial', name: 'tpl_fulfil_ready_partial', language: 'en', revision: 1 },
+            usefulForDays: 14,
+          },
+          audience: { mode: 'ALL_ELIGIBLE', rules: null },
+          audienceMode: 'ALL_ELIGIBLE',
+          matchMode: 'STRICT',
+          steps: [
+            {
+              stepId: 'ready_notice',
+              stepName: 'Outfit Ready Notice',
+              offsetDays: 0,
+              delayMinutes: 0,
+              localTime: '10:00',
+              delay: { value: 0, unit: 'MINUTES' },
+              prerequisite: 'NONE',
+              outsideHoursPolicy: 'DEFER_NEXT_DAY',
+              maxDeferralHours: 16,
+              maxLatenessMinutes: 360,
+              stopOnReply: false,
+              stopOnGoal: true,
+              templateRef: { id: 'tpl_fulfil_ready', name: 'tpl_fulfil_ready', language: 'en', revision: 1 },
+              bindings: {
+                '1': { source: 'customer.firstName' },
+                '2': { source: 'shop.displayName' },
+                '3': { source: 'order.number' },
+              },
+            },
+          ],
+          enabledBranches: ['branch_main'],
+          timezone: 'Asia/Kolkata',
+          bindingsSchemaVersion: 2,
+          isPublished: false,
+        }, seedGroup, false)], session);
+
+        await upsertMany(
+          'campaignControlGates',
+          ['tenantId', 'campaignId'],
+          applySeedLabels([
+            { campaignId: 'cmp_outfit_ready', tenantId: 'shop_a', pauseGeneration: 0, version: 1 },
+            { campaignId: 'cmp_delivery_dispatched', tenantId: 'shop_a', pauseGeneration: 0, version: 1 },
+            { campaignId: 'cmp_delivery_delivered', tenantId: 'shop_a', pauseGeneration: 0, version: 1 },
+            { campaignId: 'cmp_outfit_ready_partial', tenantId: 'shop_a', pauseGeneration: 0, version: 1 },
+          ], seedGroup, false),
+          session
+        );
+      }
+
       return {
         shopACount,
         shopBCount,
@@ -4994,7 +5889,7 @@ if (require.main === module) {
       } else if (command === 'gift-wedding') {
         console.log('DEPRECATED: use pnpm seed:scenario gift-wedding');
         await seedScenario('gift-wedding', { live: isLive, reset: isReset });
-      } else if (['first-repeat', 'unresolved-enquiry', 'complete-outfit', 'selected-stock-promotion', 'festival-collection', 'exhibition-trunk-show', 'fitting-alteration'].includes(command)) {
+      } else if (['first-repeat', 'unresolved-enquiry', 'complete-outfit', 'selected-stock-promotion', 'festival-collection', 'exhibition-trunk-show', 'fitting-alteration', 'outfit-fulfilment'].includes(command)) {
         await seedScenario(command, { live: isLive, reset: isReset });
       } else {
         const scenarioIdx = args.findIndex((a) => a === '--scenario' || a === '-s');

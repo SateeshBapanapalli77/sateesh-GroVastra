@@ -22,11 +22,12 @@ import {
   SrcCustomerEventModel,
   SrcOrderModel,
   SrcCreditModel,
+  SrcFulfilmentModel,
   AuditLogModel,
   ICampaignEventInbox,
 } from '../../db/models';
 import { DateTime } from 'luxon';
-import { mockCustomerSource, mockOccasionSource } from '../../adapters';
+import { mockCustomerSource, mockOccasionSource, mockFulfilmentSource } from '../../adapters';
 import { clock } from '../clock';
 import { logger } from '../../logger';
 import { campaignActivityService } from '../campaign-activity.service';
@@ -82,6 +83,7 @@ import { handleFestivalSeasonEvent } from '../../presets/festivalCollection/seas
 import { handleOrderCompletedForFestivalGoal } from '../../presets/festivalCollection/goalHandler';
 import { handleStoreEvent, handleOrderCompletedForExhibitionGoal } from '../../presets/exhibitionTrunkShow';
 import { handleFittingAppointmentEvent, handleAlterationEvent } from '../../presets/fittingAlteration';
+import { handleFulfilmentEvent, handleShipmentEvent } from '../../presets/outfitCollectionDelivery';
 
 export const PRODUCER_EVENT_FAMILIES: Record<string, string[]> = {
   orders: [
@@ -163,6 +165,10 @@ export const PRODUCER_EVENT_FAMILIES: Record<string, string[]> = {
     'alteration.stage_changed',
     'alteration.cancelled',
     'alteration.completed',
+  ],
+  fulfilment: [
+    'fulfilment.updated',
+    'shipment.updated',
   ],
   preferences: ['preference.changed'],
   'dev-tools': ['*'],
@@ -296,6 +302,16 @@ export class EventConsumerService {
       'event.updated',
       'event.cancelled',
       'rsvp.completed',
+      'appointment.booked',
+      'appointment.rescheduled',
+      'appointment.cancelled',
+      'appointment.completed',
+      'alteration.created',
+      'alteration.stage_changed',
+      'alteration.cancelled',
+      'alteration.completed',
+      'fulfilment.updated',
+      'shipment.updated',
     ]);
 
     if (!SUPPORTED_EVENT_TYPES.has(eventType)) {
@@ -423,6 +439,24 @@ export class EventConsumerService {
       if (reqDoc && payload.entityVersion < reqDoc.entityVersion) {
         isStale = true;
         authoritativeVersion = reqDoc.entityVersion;
+      }
+    } else if (payload.type.startsWith('fulfilment.')) {
+      const srcFulfilment = await mockFulfilmentSource.getFulfilment(tenantId, payload.entityId);
+      if (srcFulfilment && payload.entityVersion < srcFulfilment.entityVersion) {
+        isStale = true;
+        authoritativeVersion = srcFulfilment.entityVersion;
+      }
+    } else if (payload.type.startsWith('shipment.')) {
+      const srcFulfilment = await SrcFulfilmentModel.findOne({
+        tenantId,
+        'shipments.shipmentId': payload.entityId,
+      }).lean();
+      const shp = (srcFulfilment as any)?.shipments?.find(
+        (s: any) => s.shipmentId === payload.entityId
+      );
+      if (shp && payload.entityVersion < (shp.entityVersion || 1)) {
+        isStale = true;
+        authoritativeVersion = shp.entityVersion || 1;
       }
     }
 
@@ -604,6 +638,14 @@ export class EventConsumerService {
         case 'alteration.cancelled':
         case 'alteration.completed':
           effects = await handleAlterationEvent(eventDoc);
+          break;
+
+        case 'fulfilment.updated':
+          effects = await handleFulfilmentEvent(eventDoc);
+          break;
+
+        case 'shipment.updated':
+          effects = await handleShipmentEvent(eventDoc);
           break;
 
         default:

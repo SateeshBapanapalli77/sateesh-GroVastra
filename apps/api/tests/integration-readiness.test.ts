@@ -20,6 +20,9 @@ describe('Integration Readiness & Approved Template Catalogue (Spec p3, p7, p26,
   const expectedSendableCount = metaTemplateCatalogue.templates.filter(
     (template: { sendable: boolean }) => template.sendable
   ).length;
+  const expectedUtilityCount = metaTemplateCatalogue.templates.filter(
+    (template: { category: string }) => template.category === 'UTILITY'
+  ).length;
   const expectedDummyCount = expectedTemplateCount - expectedMetaProvidedCount;
   let ownerShopAToken: string;
   let adminShopAToken: string;
@@ -190,7 +193,7 @@ describe('Integration Readiness & Approved Template Catalogue (Spec p3, p7, p26,
         .set('Authorization', `Bearer ${ownerShopAToken}`);
 
       expect(resUtility.status).toBe(200);
-      expect(resUtility.body.templates.length).toBe(2);
+      expect(resUtility.body.templates.length).toBe(expectedUtilityCount);
       expect(
         resUtility.body.templates.every((t: { category: string }) => t.category === 'UTILITY')
       ).toBe(true);

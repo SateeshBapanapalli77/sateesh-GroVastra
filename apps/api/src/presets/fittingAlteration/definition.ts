@@ -27,7 +27,7 @@ export const FITTING_ALTERATION_CONFIG = {
   maxLatenessMinutes: 120,
 } as const;
 
-export const FITTING_ALTERATION_DEFINITION: CampaignPreset = {
+export const FITTING_ALTERATION_DEFINITION: CampaignPreset & { defaultSteps?: any[] } = {
   id: FITTING_ALTERATION_ID,
   name: 'Fitting / Alteration',
   description:
@@ -35,6 +35,9 @@ export const FITTING_ALTERATION_DEFINITION: CampaignPreset = {
   triggerFamily: 'PRODUCTION_MILESTONE',
   implemented: true,
   category: 'SERVICE',
+  get defaultSteps() {
+    return this.defaults?.steps;
+  },
   defaults: {
     name: 'Fitting / Alteration',
     industry: 'BOUTIQUE',

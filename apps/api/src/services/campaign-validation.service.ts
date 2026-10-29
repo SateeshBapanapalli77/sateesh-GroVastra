@@ -124,6 +124,44 @@ export class CampaignValidationService {
       (draft.trigger as any)?.type === 'APPOINTMENT' ||
       (draft.trigger as any)?.type === 'PRODUCTION_MILESTONE';
 
+    const isOutfitFulfilment =
+      [
+        'outfit_collection_delivery',
+        'OUTFIT_COLLECTION_DELIVERY',
+        'outfit_fulfilment',
+        'fulfilment_milestone',
+        'outfit_collection',
+      ].includes((draft as any).presetId || '') ||
+      (draft.trigger as any)?.type === 'FULFILMENT_MILESTONE';
+
+    const isServiceCampaign =
+      (draft as any).purpose === 'SERVICE' ||
+      (draft as any).category === 'SERVICE' ||
+      isOutfitFulfilment ||
+      isFittingAlteration;
+
+    const SERVICE_PRESET_IDS = new Set([
+      'outfit_collection_delivery',
+      'OUTFIT_COLLECTION_DELIVERY',
+      'outfit_fulfilment',
+      'fulfilment_milestone',
+      'outfit_collection',
+      'fitting_alteration',
+      'FITTING_ALTERATION',
+      'fitting',
+      'alteration',
+      'fitting_appointment',
+      'alteration_milestone',
+    ]);
+    if ((draft as any).purpose === 'SERVICE' && !SERVICE_PRESET_IDS.has((draft as any).presetId || '')) {
+      errors.push({
+        fieldPath: 'purpose',
+        message: `Marketing preset '${(draft as any).presetId}' cannot use SERVICE purpose (C14)`,
+        code: 'MARKETING_CANNOT_USE_SERVICE_PURPOSE',
+        resolutionOwner: 'BOUTIQUE_OWNER',
+      });
+    }
+
     // 2.5. Reject removed triggerMode field
     if ((draft as any).triggerMode !== undefined) {
       errors.push({
@@ -442,10 +480,19 @@ export class CampaignValidationService {
     } else if (isMatchingCollection || (draft.trigger as any)?.type === 'COLLECTION_PUBLICATION') {
       // COLLECTION_PUBLICATION trigger is implicit for matching_collection — no extra fields to validate.
       // The trigger fires when a collection.published event is received by the event consumer.
+    } else if (isOutfitFulfilment || (draft.trigger as any)?.type === 'FULFILMENT_MILESTONE') {
+      const allowedAnchors = ['FULFILMENT_READY_AT', 'SHIPMENT_DISPATCHED_AT', 'SHIPMENT_DELIVERED_AT'];
+      if ((draft.trigger as any)?.anchor && !allowedAnchors.includes((draft.trigger as any).anchor)) {
+        errors.push({
+          fieldPath: 'trigger.anchor',
+          message: `Invalid trigger anchor '${(draft.trigger as any).anchor}'. Supported: ${allowedAnchors.join(', ')}`,
+          resolutionOwner: 'BOUTIQUE_OWNER',
+        });
+      }
     } else if (draft.trigger) {
       errors.push({
         fieldPath: 'trigger.type',
-        message: `Trigger type '${(draft.trigger as any).type}' is not supported. Supported: ANNUAL_DATE, INACTIVITY_THRESHOLD, EVENT_DELAY, ENQUIRY_EVENT_DELAY, CUSTOMER_EVENT_DATE, REQUEST_STOCK_AVAILABLE, COLLECTION_PUBLICATION`,
+        message: `Trigger type '${(draft.trigger as any).type}' is not supported. Supported: ANNUAL_DATE, INACTIVITY_THRESHOLD, EVENT_DELAY, ENQUIRY_EVENT_DELAY, CUSTOMER_EVENT_DATE, REQUEST_STOCK_AVAILABLE, COLLECTION_PUBLICATION, FULFILMENT_MILESTONE`,
         resolutionOwner: 'BOUTIQUE_OWNER',
       });
     }
@@ -490,12 +537,75 @@ export class CampaignValidationService {
     const isEventDelay =
       isMatchingCollection ||
       isRequestedItem ||
+      isOutfitFulfilment ||
+      isFittingAlteration ||
       (draft.trigger as any)?.type === 'EVENT_DELAY' ||
       (draft.trigger as any)?.type === 'ENQUIRY_EVENT_DELAY' ||
       (draft.trigger as any)?.type === 'ORDER_EVENT_DELAY' ||
       (draft.trigger as any)?.type === 'REQUEST_STOCK_AVAILABLE' ||
-      (draft.trigger as any)?.type === 'COLLECTION_PUBLICATION';
+      (draft.trigger as any)?.type === 'COLLECTION_PUBLICATION' ||
+      (draft.trigger as any)?.type === 'FULFILMENT_MILESTONE';
     let prevTotalDelayHours = -1;
+
+    // F31 Fulfilment Milestone Campaign Checks
+    if (isOutfitFulfilment) {
+      const milestone = (draft as any).milestone;
+      if (!milestone || !['OUTFIT_READY', 'DISPATCHED', 'DELIVERED'].includes(milestone)) {
+        errors.push({
+          fieldPath: 'milestone',
+          message: 'milestone is required and must be OUTFIT_READY, DISPATCHED, or DELIVERED',
+          resolutionOwner: 'BOUTIQUE_OWNER',
+        });
+      } else if (milestone === 'DISPATCHED' || milestone === 'DELIVERED') {
+        if (steps.length !== 1) {
+          errors.push({
+            fieldPath: 'steps',
+            message: `${milestone} milestone campaign must have exactly 1 step (found ${steps.length})`,
+            resolutionOwner: 'BOUTIQUE_OWNER',
+          });
+        }
+        if ((draft as any).partialReadyTemplateRef) {
+          errors.push({
+            fieldPath: 'partialReadyTemplateRef',
+            message: 'partialReadyTemplateRef is only allowed for OUTFIT_READY milestone',
+            resolutionOwner: 'BOUTIQUE_OWNER',
+          });
+        }
+      }
+
+      if ((draft as any).usefulForDays !== undefined) {
+        const ufd = (draft as any).usefulForDays;
+        if (typeof ufd !== 'number' || ufd < 1 || ufd > 60 || !Number.isInteger(ufd)) {
+          errors.push({
+            fieldPath: 'usefulForDays',
+            message: 'usefulForDays must be an integer between 1 and 60 days',
+            resolutionOwner: 'BOUTIQUE_OWNER',
+          });
+        }
+      }
+
+      if ((draft as any).partialReadyTemplateRef) {
+        const pRef = (draft as any).partialReadyTemplateRef;
+        const pId = typeof pRef === 'string' ? pRef : pRef.id;
+        if (pId) {
+          const pTpl = await mockTemplateSource.getTemplateById(pId);
+          if (!pTpl) {
+            errors.push({
+              fieldPath: 'partialReadyTemplateRef.id',
+              message: `Partial ready template '${pId}' not found in catalogue`,
+              resolutionOwner: 'INTEGRATION_DEVELOPER',
+            });
+          } else if (pTpl.category !== 'UTILITY') {
+            errors.push({
+              fieldPath: 'partialReadyTemplateRef.category',
+              message: `Partial ready template must be UTILITY category, but '${pTpl.name}' is '${pTpl.category}'`,
+              code: 'SERVICE_REQUIRES_UTILITY_TEMPLATE',
+              resolutionOwner: 'INTEGRATION_DEVELOPER',
+            });
+          }
+        }
+      }
+    }
 
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
@@ -796,24 +906,98 @@ export class CampaignValidationService {
             });
           }
 
-          // Category rule: MARKETING campaigns require MARKETING templates
-          if (template.category !== 'MARKETING') {
-            const isDevMismatchAllowed =
-              process.env.ALLOW_TEST_CATEGORY_MISMATCH === 'true' &&
-              process.env.NODE_ENV !== 'production';
-
-            if (isDevMismatchAllowed) {
-              warnings.push({
-                fieldPath: `${prefix}.templateRef.category`,
-                message: `TEST ONLY: category mismatch - template category is ${template.category} (permitted in dev mode only)`,
-                resolutionOwner: 'INTEGRATION_DEVELOPER',
-              });
-            } else {
+          if (isServiceCampaign) {
+            if (template.category !== 'UTILITY') {
               errors.push({
                 fieldPath: `${prefix}.templateRef.category`,
-                message: `Category mismatch: marketing campaigns require MARKETING templates, but '${template.name}' is '${template.category}'`,
+                message: `Service campaigns require UTILITY templates, but '${template.name}' is '${template.category}'`,
+                code: 'SERVICE_REQUIRES_UTILITY_TEMPLATE',
                 resolutionOwner: 'INTEGRATION_DEVELOPER',
               });
+            }
+
+            // Anti-Cap-Bypass C14: PROMO_IN_SERVICE_TEMPLATE
+            const promoWordsRegex = /\b(offer|discount|% off|sale|coupon|new arrival|new collection|limited|hurry)\b/i;
+            const hasPromoWord = template.bodyText && promoWordsRegex.test(template.bodyText);
+            let hasPromoBinding = false;
+            if (step.bindings) {
+              for (const b of Object.values(step.bindings)) {
+                const src = typeof b === 'string' ? b : (b as any)?.source;
+                if (src && /^(offer\.|credit\.|match\.|collection\.|request\.|item\.|anchor\.|complement\.)/.test(src)) {
+                  hasPromoBinding = true;
+                  break;
+                }
+              }
+            }
+            if (hasPromoWord || hasPromoBinding) {
+              errors.push({
+                fieldPath: `${prefix}.templateRef`,
+                message: 'Promotional wording or promotional binding sources are not allowed in service templates (Anti-Cap-Bypass C14)',
+                code: 'PROMO_IN_SERVICE_TEMPLATE',
+                resolutionOwner: 'BOUTIQUE_OWNER',
+              });
+            }
+
+            // Pickup instructions warning for delivery orders
+            if (isOutfitFulfilment) {
+              const filter = (draft as any).fulfilmentFilter || 'PICKUP';
+              const milestone = (draft as any).milestone;
+              if (milestone === 'OUTFIT_READY') {
+                if (i === 0 && (step as any).delay?.value > 0) {
+                  warnings.push({
+                    fieldPath: `${prefix}.delay`,
+                    message: 'First step for outfit ready should ideally be immediate (0 minutes delay).',
+                    resolutionOwner: 'BOUTIQUE_OWNER',
+                  });
+                }
+                if (filter === 'DELIVERY' || filter === 'ANY') {
+                  if (template.bodyText && /\b(pickup|pick up|collect|collection)\b/i.test(template.bodyText)) {
+                    warnings.push({
+                      fieldPath: `${prefix}.templateRef`,
+                      message: 'Ready template body mentions pickup while filter is DELIVERY or ANY (pickup instructions sent to delivery orders).',
+                      resolutionOwner: 'BOUTIQUE_OWNER',
+                    });
+                  }
+                }
+              } else if (milestone === 'DISPATCHED' || milestone === 'DELIVERED') {
+                if (filter === 'PICKUP') {
+                  warnings.push({
+                    fieldPath: 'fulfilmentFilter',
+                    message: `${milestone} milestone configured with PICKUP filter.`,
+                    resolutionOwner: 'BOUTIQUE_OWNER',
+                  });
+                }
+              }
+            }
+          } else {
+            // MARKETING campaigns
+            if ((draft as any).purpose === 'SERVICE') {
+              errors.push({
+                fieldPath: 'purpose',
+                message: 'A marketing campaign cannot claim SERVICE purpose to bypass contact caps (Anti-Cap-Bypass C14)',
+                code: 'PROMO_IN_SERVICE_TEMPLATE',
+                resolutionOwner: 'BOUTIQUE_OWNER',
+              });
+            }
+
+            if (template.category !== 'MARKETING') {
+              const isDevMismatchAllowed =
+                process.env.ALLOW_TEST_CATEGORY_MISMATCH === 'true' &&
+                process.env.NODE_ENV !== 'production';
+
+              if (isDevMismatchAllowed) {
+                warnings.push({
+                  fieldPath: `${prefix}.templateRef.category`,
+                  message: `TEST ONLY: category mismatch - template category is ${template.category} (permitted in dev mode only)`,
+                  resolutionOwner: 'INTEGRATION_DEVELOPER',
+                });
+              } else {
+                errors.push({
+                  fieldPath: `${prefix}.templateRef.category`,
+                  message: `Category mismatch: marketing campaigns require MARKETING templates, but '${template.name}' is '${template.category}'`,
+                  resolutionOwner: 'INTEGRATION_DEVELOPER',
+                });
+              }
             }
           }
 

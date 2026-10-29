@@ -56,7 +56,21 @@ export class ContactGateService {
     const normCategory = (templateCategory || '').toUpperCase();
     const isMarketingTemplate = normCategory === 'MARKETING';
     const normPreset = (campaignPresetId || '').toLowerCase();
-    const servicePresets = ['enquiry', 'order_status', 'appointment_reminder', 'support'];
+    const servicePresets = [
+      'enquiry',
+      'order_status',
+      'appointment_reminder',
+      'support',
+      'fitting_alteration',
+      'fitting',
+      'alteration',
+      'fitting_appointment',
+      'alteration_milestone',
+      'outfit_collection_delivery',
+      'outfit_collection',
+      'outfit_fulfilment',
+      'fulfilment_milestone',
+    ];
     const isServicePreset = servicePresets.includes(normPreset);
 
     // C14: If template is MARKETING or declaredPurpose is MARKETING or it is not an authentic service preset,
@@ -150,6 +164,47 @@ export class ContactGateService {
     session?: ClientSession
   ): Promise<CapacityCheckResult> {
     const gate = await this.getGate(tenantId, destinationHash, session);
+
+    if (purpose === 'SERVICE') {
+      const spacingHours = settings.serviceContactSpacingHours ?? 24;
+      const spacingMs = spacingHours * 60 * 60 * 1000;
+      const serviceEntries = (gate?.ledger || [])
+        .filter(
+          (e: any) =>
+            e.purpose === 'SERVICE' &&
+            e.status !== 'RELEASED' &&
+            e.executionId !== excludeExecutionId
+        )
+        .sort((a: any, b: any) => new Date(b.reservedAt).getTime() - new Date(a.reservedAt).getTime());
+
+      const lastService = serviceEntries[0];
+      if (lastService) {
+        const lastTime = new Date(lastService.reservedAt).getTime();
+        const elapsed = now.getTime() - lastTime;
+        if (elapsed < spacingMs) {
+          const earliestAvailableAt = new Date(lastTime + spacingMs + 1000);
+          return {
+            allowed: false,
+            reason: 'SERVICE_SPACING_LIMIT',
+            dailyCount: 0,
+            weeklyCount: 0,
+            dailyCap: Infinity,
+            weeklyCap: Infinity,
+            gate,
+            earliestAvailableAt,
+          };
+        }
+      }
+
+      return {
+        allowed: true,
+        dailyCount: 0,
+        weeklyCount: 0,
+        dailyCap: Infinity,
+        weeklyCap: Infinity,
+        gate,
+      };
+    }
 
     const dailyCap = settings.marketingCaps?.daily ?? 1;
     const weeklyCap = settings.marketingCaps?.weekly ?? 3;
@@ -251,10 +306,17 @@ export class ContactGateService {
     // If candidate time is earlier than next day at sending start hour, ensure we target valid hours
     const fitResult = fitIntoAllowedHours(candidateTime, settings, execution.expiresAt);
 
+    const isService =
+      (execution as any).purpose === 'SERVICE' ||
+      (execution as any).effectivePurpose === 'SERVICE' ||
+      (execution as any).executionKey?.includes(':ready:') ||
+      (execution as any).executionKey?.includes(':dispatch:') ||
+      (execution as any).executionKey?.includes(':delivered:');
+
     if (fitResult.status === 'SKIP' || fitResult.dueAt.getTime() > new Date(execution.expiresAt).getTime()) {
       return {
         shouldSkip: true,
-        skipReason: EXECUTION_REASONS.SKIPPED_CONTACT_CAP,
+        skipReason: isService ? 'SKIPPED_SERVICE_SPACING' : EXECUTION_REASONS.SKIPPED_CONTACT_CAP,
         originalDueAt: execution.originalDueAt || execution.dueAt,
       };
     }

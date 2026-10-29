@@ -1,6 +1,27 @@
 # GroVastra Auto Campaigns - Progress & Status
 
-## Project Status: Feature F30 Complete — Fitting / alteration campaign (FA01–FA35)
+## Project Status: Feature F31 Complete — Outfit Collection / Delivery Campaign (OD00–OD36)
+
+Feature F31 (Outfit Collection / Delivery campaign, `outfit_collection_delivery`) is fully implemented and tested. It includes:
+- Preset family registered with key `outfit_collection_delivery` and aliases (`OUTFIT_COLLECTION_DELIVERY`, `outfit_fulfilment`, `fulfilment_milestone`, `outfit_collection`) operating under category `SERVICE`, purpose `SERVICE`, priority 60, and trigger family `PRODUCTION_MILESTONE`.
+- Supported milestones: `OUTFIT_READY` (`ready:${orderId}:${readinessVersion}`), `DISPATCHED` (`dispatch:${orderId}:${shipmentId}`), and `DELIVERED` (`delivered:${orderId}:${shipmentId}`).
+- Strict adherence to the 10 Hard Rules:
+  - Read-only ingestion boundary: Production code never writes `src_fulfilments` or `src_orders` (accessed exclusively via read-only `FulfilmentSource` interface).
+  - Authoritative readiness version: Engine never computes `readinessVersion`, only compares source versions.
+  - Delivery arranged pickup blocking: *"If delivery is arranged, do not send pickup instructions"* (`DELIVERY_ARRANGED`).
+  - Verified shipment dispatch: *"Label creation alone is not dispatch"* (`UNVERIFIED_SHIPMENT_EVENT`).
+  - Recheck at dispatch: Changed destination or readiness version blocks message with `BLOCKED_STALE_INTENT`.
+  - Pre-submission lifecycle recheck: Orders collected or delivered skip pending uncollected reminders (`ORDER_COLLECTED`, `ORDER_DELIVERED`, etc.).
+- Meta UTILITY template compliance: 6 templates mapped strictly to `UTILITY` (`tpl_fulfil_ready`, `tpl_fulfil_ready_partial`, `tpl_fulfil_reminder`, `tpl_fulfil_dispatched`, `tpl_fulfil_dispatched_simple`, `tpl_fulfil_delivered`). Marketing caps not consumed; 24h default service spacing between uncollected reminders.
+- Late snapshot variable resolution for `order.number`, `shipment.carrierName`, `shipment.trackingRef`, and `shop.displayName`.
+- Checkpointed offline reconciler (`reconcile:fulfilment`) using `CampaignCheckpointModel` and bounded scanning.
+- Seed scenario `outfit-fulfilment`: 14 customers, 16 fulfilments, 4 campaigns across pickup and delivery modes.
+- Complete automated test suite OD00–OD36: 37/37 passing (OD00 meta-test verifying `docs/test-matrix/OD.txt` verbatim + OD01 through OD36).
+- Web UI updates: `Truck` preset icon, `SERVICE` badge in preset library, trigger milestone & mode filter controls, static compliance notice, bindings helper hint, and interactive Mock Fulfilment Dev Review panel in `apps/web`.
+
+### F31 Status: COMPLETE
+
+## Previous Milestone: Feature F30 Complete — Fitting / alteration campaign (FA01–FA35)
 
 Feature F30 (Fitting / alteration campaign) is fully implemented and tested. It includes:
 - Clarified single catalog preset vs two operational sequences: Defined as a single catalog preset family (`id: 'fitting_alteration'`, `category: 'SERVICE'`, `triggerFamily: 'PRODUCTION_MILESTONE'`) with aliases (`FITTING_ALTERATION`, `fitting`, `alteration`, `fitting_appointment`, `alteration_milestone`) covering both Fitting Appointment sequence (`fitting:appointmentId`) and Alteration Milestone sequence (`alteration:jobId:milestoneId`).

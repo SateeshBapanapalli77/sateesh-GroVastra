@@ -1334,6 +1334,198 @@
         }
       ],
       "bodyText": "Hi {{1}}, update on your {{3}} at {{2}}: it is now {{4}}. {{5}}."
+    },
+    {
+      "id": "tpl_fulfil_ready",
+      "name": "fulfil_ready",
+      "language": "en",
+      "category": "UTILITY",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "order_number",
+          "type": "text",
+          "sample": "ORD-1042"
+        },
+        {
+          "index": 3,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        }
+      ],
+      "bodyText": "Hi {{1}}, your order {{2}} is ready for collection at {{3}}. Please collect it during store hours."
+    },
+    {
+      "id": "tpl_fulfil_ready_partial",
+      "name": "fulfil_ready_partial",
+      "language": "en",
+      "category": "UTILITY",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "order_number",
+          "type": "text",
+          "sample": "ORD-1042"
+        },
+        {
+          "index": 3,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        }
+      ],
+      "bodyText": "Hi {{1}}, part of your order {{2}} is ready for collection at {{3}}. We will tell you when the rest is ready."
+    },
+    {
+      "id": "tpl_fulfil_reminder",
+      "name": "fulfil_reminder",
+      "language": "en",
+      "category": "UTILITY",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "order_number",
+          "type": "text",
+          "sample": "ORD-1042"
+        },
+        {
+          "index": 3,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        }
+      ],
+      "bodyText": "Hi {{1}}, a reminder that your order {{2}} is waiting for you at {{3}}. Please collect it when convenient."
+    },
+    {
+      "id": "tpl_fulfil_dispatched",
+      "name": "fulfil_dispatched",
+      "language": "en",
+      "category": "UTILITY",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "order_number",
+          "type": "text",
+          "sample": "ORD-1042"
+        },
+        {
+          "index": 3,
+          "name": "carrier",
+          "type": "text",
+          "sample": "Sample Courier"
+        },
+        {
+          "index": 4,
+          "name": "tracking_ref",
+          "type": "text",
+          "sample": "SC123456789"
+        }
+      ],
+      "bodyText": "Hi {{1}}, your order {{2}} has been dispatched with {{3}}. Tracking reference: {{4}}."
+    },
+    {
+      "id": "tpl_fulfil_dispatched_simple",
+      "name": "fulfil_dispatched_simple",
+      "language": "en",
+      "category": "UTILITY",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "order_number",
+          "type": "text",
+          "sample": "ORD-1042"
+        },
+        {
+          "index": 3,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        }
+      ],
+      "bodyText": "Hi {{1}}, your order {{2}} from {{3}} has been dispatched for delivery."
+    },
+    {
+      "id": "tpl_fulfil_delivered",
+      "name": "fulfil_delivered",
+      "language": "en",
+      "category": "UTILITY",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "order_number",
+          "type": "text",
+          "sample": "ORD-1042"
+        },
+        {
+          "index": 3,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        }
+      ],
+      "bodyText": "Hi {{1}}, your order {{2}} from {{3}} has been delivered. Please contact the store if anything is not right."
     }
   ]
 }
