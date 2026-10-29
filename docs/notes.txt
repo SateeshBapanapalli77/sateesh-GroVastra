@@ -1,0 +1,45 @@
+A default install of MongoDB runs as a standalone server, and standalone servers don’t support transactions.
+
+To provide transactions; We have two options:
+    1. A free MongoDB Atlas M0 cluster 
+    2. Turn your local MongoDB into a single-node replica set. 
+
+
+
+
+Choose MongoDB Atlas M0 cluster, when:
+    - It is a replica set from the start, so there is nothing to configure.
+    - It needs internet for every run.
+    - only when you deploy to a shared environment. I.E. Your data is stored online, so you can reach it from another computer, and a teammate could use the same database later.
+    - You must add your IP address to Atlas’s access list. If your home or office IP changes, the connection is refused until you update it.
+    - The free tier has storage and connection limits [check Atlas’s current limits]. It is fine for your mock data, but it is slower than local.
+
+
+
+
+local replica set:
+    - Many automated tests
+    - Resets. You will wipe and re-seed often, and the Clock tests will create lots of records.
+    - Privacy. Your real test numbers stay on your machine.
+    - Cost and reliability. There is no internet dependency and no account limits.
+
+
+    Steps to convert into replica set:- 
+        - Open mongod.cfg (on Windows usually under C:\Program Files\MongoDB\Server\<version>\bin\) as Administrator.
+        - Add the following, keeping the YAML indentation:
+            replication:
+                replSetName: rs0
+
+        - Restart the MongoDB service (Services app inside Windows).
+        - In Compass, open the embedded shell (>_ MONGOSH) and run rs.initiate() once.
+                        Check mongoDB shell version:            mongosh --version
+                        Connect to MongoDB:                     mongosh "mongodb://localhost:27017"
+                        Continue setting up your replica set:   rs.initiate({
+                                                                    _id: "rs0",
+                                                                    members: [{ _id: 0, host: "localhost:27017" }]
+                                                                })
+        - Use this connection string in .env: mongodb://localhost:27017/?replicaSet=rs0
+
+
+
+

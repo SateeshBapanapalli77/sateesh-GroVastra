@@ -1,0 +1,30 @@
+{
+    "schemaVersion": 1,
+    "producer": "orders",
+    "eventId": "evt_order_030",
+    "tenantId": "shop_a",
+    "type": "order.completed",
+    "entityId": "ord_030",
+    "entityVersion": 1,
+    "occurredAt": "2026-10-28T09:00:00Z",
+    "receivedAt": "2026-10-28T09:00:02Z",
+    "customerId": "cus_001",
+    "data": {
+        "paid": true,
+        "status": "COMPLETED",
+        "netPaise": 650000,
+        "occasionRef": null,
+        "enquiryRef": null,
+        "lineRefs": [
+            "line_001"
+        ],
+        "lines": [
+            {
+                "lineId": "line_001",
+                "productId": "prd_001",
+                "variantId": "var_001_red",
+                "qty": 1
+            }
+        ]
+    }
+}

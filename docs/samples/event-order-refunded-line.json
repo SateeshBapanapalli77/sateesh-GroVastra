@@ -1,0 +1,40 @@
+{
+    "schemaVersion": 1,
+    "producer": "orders",
+    "eventId": "evt_order_041",
+    "tenantId": "shop_a",
+    "type": "order.refunded",
+    "entityId": "ord_041",
+    "entityVersion": 2,
+    "occurredAt": "2026-10-29T10:00:00Z",
+    "receivedAt": "2026-10-29T10:00:02Z",
+    "customerId": "cus_001",
+    "data": {
+        "paid": true,
+        "status": "COMPLETED",
+        "refundType": "PARTIAL",
+        "refundedPaise": 900000,
+        "netPaise": 1500000,
+        "lineRefs": [
+            "line_002"
+        ],
+        "lines": [
+            {
+                "lineId": "line_001",
+                "productId": "prd_saree_001",
+                "variantId": "var_red",
+                "qty": 1,
+                "returnedQty": 0,
+                "lineNetPaise": 1500000
+            },
+            {
+                "lineId": "line_002",
+                "productId": "prd_saree_002",
+                "variantId": "var_blue",
+                "qty": 1,
+                "returnedQty": 1,
+                "lineNetPaise": 900000
+            }
+        ]
+    }
+}

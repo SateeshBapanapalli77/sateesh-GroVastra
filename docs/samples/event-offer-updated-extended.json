@@ -1,0 +1,17 @@
+{
+    "schemaVersion": 1,
+    "producer": "offers",
+    "eventId": "evt_off_002",
+    "tenantId": "shop_a",
+    "type": "offer.updated",
+    "entityId": "off_sp_percent",
+    "entityVersion": 2,
+    "occurredAt": "2026-11-10T10:00:00Z",
+    "receivedAt": "2026-11-10T10:00:02Z",
+    "customerId": null,
+    "data": {
+        "change": "VALIDITY_EXTENDED",
+        "status": "ACTIVE",
+        "validUntil": "2026-11-22T18:29:59Z"
+    }
+}

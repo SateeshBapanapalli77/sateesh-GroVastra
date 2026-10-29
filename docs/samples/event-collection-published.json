@@ -1,0 +1,41 @@
+{
+    "schemaVersion": 1,
+    "producer": "collections",
+    "eventId": "evt_col_001",
+    "tenantId": "shop_a",
+    "type": "collection.published",
+    "entityId": "rel_mc_winter",
+    "entityVersion": 1,
+    "occurredAt": "2026-10-26T09:30:00Z",
+    "receivedAt": "2026-10-26T09:30:02Z",
+    "customerId": null,
+    "data": {
+        "name": "Winter Silk Edit",
+        "status": "ACTIVE",
+        "publishedAt": "2026-10-26T09:30:00Z",
+        "validUntil": "2026-12-31T18:29:59Z",
+        "tags": [
+            "winter"
+        ],
+        "branchIds": [],
+        "items": [
+            {
+                "productId": "prd_mc_silk_red",
+                "variantIds": [
+                    "var_mc_silk_red_free"
+                ],
+                "position": 1
+            },
+            {
+                "productId": "prd_mc_blouse_gold",
+                "variantIds": null,
+                "position": 2
+            },
+            {
+                "productId": "prd_mc_dupatta_cream",
+                "variantIds": null,
+                "position": 3
+            }
+        ]
+    }
+}

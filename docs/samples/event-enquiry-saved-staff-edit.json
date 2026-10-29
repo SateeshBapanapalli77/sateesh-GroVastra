@@ -1,0 +1,24 @@
+{
+    "schemaVersion": 1,
+    "producer": "enquiries",
+    "eventId": "evt_enq_003",
+    "tenantId": "shop_a",
+    "type": "enquiry.saved",
+    "entityId": "enq_001",
+    "entityVersion": 3,
+    "occurredAt": "2026-10-27T12:00:00Z",
+    "receivedAt": "2026-10-27T12:00:02Z",
+    "customerId": "cus_001",
+    "data": {
+        "branchId": "branch_main",
+        "channel": "IN_STORE",
+        "status": "OPEN",
+        "staffTakeover": false,
+        "itemRef": {
+            "productId": "prd_001",
+            "variantId": "var_001_red"
+        },
+        "createdAt": "2026-10-26T09:30:00Z",
+        "lastCustomerInteractionAt": "2026-10-27T11:00:00Z"
+    }
+}

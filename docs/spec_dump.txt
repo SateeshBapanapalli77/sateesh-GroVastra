@@ -1,0 +1,1789 @@
+--- PAGE 1 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+1
+GROVASTRA / CORRECTED SCOPE / V2.0
+Auto campaigns
+Developer handoff
+React frontend - Node.js backend - MongoDB database
+For handloom stores, boutique owners and apparel shops. Prepared 13 October 2026.
+Build the auto-campaign system end to end
+The assigned developer implements campaign configuration, customer eligibility, triggers,
+scheduling, multi-step execution, stop rules, reporting and message dispatch. A birthday,
+anniversary or stock event must automatically create and execute the right campaign steps without staff
+selecting each recipient manually.
+THIS DEVELOPER
+OTHER DEVELOPER
+React auto-campaign screens and settings; Node
+campaign engine and scheduler; MongoDB campaign
+records; business rules, edge cases and tests.
+WhatsApp account setup, credentials provisioning,
+account approval, template creation/submission/approval
+and the authoritative template catalogue.
+Select an existing approved template for each campaign
+step and send it through the provisioned connection.
+Provide ready connection details, approved template
+variants, status changes and authenticated provider
+events.
+What "one template or message" means
+Each due campaign step sends one selected message to one eligible customer. A campaign may
+enroll many customers and contain several scheduled steps. This does not reduce the project to a manual
+single-message sending screen.
+Document status
+This v2 specification supersedes the earlier sender-focused handoff. WhatsApp is the only delivery channel
+in this release. Most of the work described here is campaign logic; template approval and account approval
+are explicitly excluded.
+Example lead times, limits and priorities are proposed product defaults and are labelled as such. They are not claims about
+provider limits or guaranteed sales.
+
+
+--- PAGE 2 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+2
+READ FIRST
+Reading map and key decisions
+ Pages
+Subject
+3-5
+Scope, architecture and campaign catalogue
+6-8
+React screens, campaign settings and message mapping
+9-10
+Lifecycle, versioning and audience rules
+11-16
+Detailed industry campaign scenarios
+17-20
+Scheduling, collision handling, execution and pause/edit behaviour
+21-25
+MongoDB models, configuration, events, indexes and transactions
+26-28
+Node APIs, delivery boundary and reporting
+29-32
+Edge cases and acceptance tests
+33-35
+Worked example, delivery checklist and references
+Release decisions
+- Provide preset-driven campaigns with a finite sequence of 1-3 steps. A general visual workflow builder and
+arbitrary user code are not required.
+- Support annual date triggers, explicit event/season dates, domain-event triggers and inactivity scans.
+- Use approved-template messages for automated outbound campaigns. Custom free-text editing is not a
+campaign-template approval bypass.
+- Published campaign versions are immutable. Existing enrollments retain their version; current opt-out,
+stock, order and provider state are always rechecked.
+- Use a MongoDB-backed scheduler and durable worker jobs. A MongoDB replica set supports the specified
+transactions. Redis is not required.
+- No bulk WhatsApp request is assumed: fan out safely to one execution per customer per campaign step.
+Terms
+Campaign: saved rules and steps. Occurrence: one birthday year, collection launch, enquiry or other
+trigger instance. Enrollment: one customer participating in that occurrence. Execution: one planned
+message step. Attempt: one provider submission for an execution. These are distinct records and metrics.
+
+
+--- PAGE 3 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+3
+01 / SCOPE
+Ownership and definition of done
+ Area
+Assigned developer implements
+Dependency supplied by others
+Campaign UX
+Preset library, draft editor, review/dry run, activate,
+pause, history and settings.
+Product owners approve proposed
+defaults.
+Triggers and audiences
+Birthday/anniversary calculation, seasonal events,
+event consumers, inactivity rules and customer
+matching.
+CRM, order, stock and appointment
+data contracts.
+Scheduling
+Enrollment, local-time planning, durable due jobs,
+catch-up, expiry and cancellation.
+Reliable time and MongoDB
+deployment.
+Business safeguards
+Live stock/offer/appointment checks, purchase/reply
+stops, contact caps and collision priority.
+Authoritative domain records; do
+not build a new POS as part of
+campaigns.
+Message execution
+Bind approved template parameters, submit one
+message per step, dedupe, safe retries and status
+projection.
+Ready connection, approved
+templates, credentials and provider
+event feed.
+Reporting
+Campaign counts, reasons, customer history and
+explicitly linked orders.
+Recorded order data and any
+available campaign link evidence.
+Approvals
+Read status and block unusable configuration.
+Other developer owns all
+WhatsApp/account/template
+approval processes.
+A complete vertical slice
+An owner activates a birthday campaign. The engine finds a matching customer, plans a message before
+the birthday, selects that customer automatically, resolves the saved template, sends when due, and stops
+later sales follow-ups after a reply or qualifying purchase. The owner can inspect why the customer was
+selected and what happened.
+A working manual Send button alone is not completion. A running scheduler that ignores opt-outs, duplicate
+events or changed order state is also not completion.
+
+
+--- PAGE 4 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+4
+02 / ARCHITECTURE
+System architecture and campaign
+flow
+ React campaign editor
+ Node campaign API
+ MongoDB campaign data
+ CRM / orders / inventory
+Customer and shop events
+ Trigger + audience engine
+ Annual, event, inactivity
+ Enrollment + step planner
+Dates, conditions, versions
+ Durable scheduler
+Select due campaign steps
+ Eligibility + collision rules
+ Stop, defer or dispatch
+ One selected message
+WhatsApp delivery adapter
+Processes
+One Node codebase may expose the campaign API and run separate planner, event-consumer and
+execution-worker processes. All durable state is in MongoDB. Process timers only wake workers; they do not
+hold the sole copy of a future schedule.
+Business inputs
+Consume customer changes, qualified orders, stock publications, appointments, credits, replies and
+permission changes. Calendar and inactivity scans cover time-based triggers and reconcile missed events.
+Event replay must be safe.
+Delivery boundary
+Campaign rules decide who, when, why and which saved template. The delivery adapter submits that
+selected template. The integration developer supplies approval/readiness data; approval operations do not
+appear in the campaign editor.
+
+
+--- PAGE 5 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+5
+03 / CAMPAIGN CATALOGUE
+Campaign library and trigger families
+ Preset
+Trigger family
+Shop value
+Birthday / anniversary
+Annual customer date
+Occasion shopping and gifts.
+Gift / wedding reminder
+Customer-declared event date
+Help customers prepare in time.
+Festival / exhibition
+Owner-approved dated event
+Seasonal shopping and store visits.
+Unresolved enquiry
+Enquiry event + elapsed time
+Follow up before interest is lost.
+Requested item available
+Inventory publication + saved request
+Contact customers already looking for
+the item.
+Matching collection
+Published collection + preferences
+Show relevant new arrivals.
+Complete the outfit
+Qualifying purchase + delay
+Relevant
+blouse/accessory/complement
+suggestions.
+First to second purchase
+First qualifying order + delay
+Encourage a useful repeat visit.
+Win-back
+Category-specific inactivity threshold
+Invite past customers back with a
+reason.
+VIP / credit / referral
+Milestone, real expiry or completed
+order
+Recognition, redemption and referral
+opportunities.
+Fitting / alteration
+Appointment or production milestone
+Keep boutique customers informed.
+Outfit collection / delivery
+Actual fulfillment milestone
+Reduce missed collections and status
+questions.
+Selected-stock promotion
+Owner publishes valid stock offer
+Match an offer to suitable customers.
+Marketing presets and order-service presets share the engine but have different purposes, templates, stop
+rules and caps. Do not turn a service update into a promotional message by inserting an offer into a
+variable.
+All presets belong to the model. Implement birthday and anniversary first as the reference slice, then add the remaining
+families in the delivery order on page 34. No preset may appear as functional in React until its evaluator is implemented.
+
+
+--- PAGE 6 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+6
+04 / FRONTEND
+React screens and owner journey
+Auto campaigns / Birthday shopping
+ Trigger > Audience > Messages > Sending rules > Review
+ When
+14 days before birthday
+ 10:00, Asia/Kolkata
+ Who
+Opted-in apparel customers
+ with a valid birthday
+ Message step 1
+Approved birthday template
+ Map name, shop and offer
+ Review and activate
+Dry-run counts + exclusions
+ No sends during preview
+Screen
+Required behaviour
+Auto campaigns overview
+Preset cards; Draft/Active/Paused/Archived status; next activity; data/readiness
+blockers.
+Campaign editor
+Trigger > Audience > Messages > Sending rules > Review. Draft autosave with
+version conflict handling.
+Review / dry run
+Eligible and excluded counts, reason breakdown, sample messages and first
+local/UTC dates. Zero live sends.
+Campaign activity
+Enrollment and step history with scheduled time, status, reason, template version
+and linked outcomes.
+Campaign settings
+Timezone, holidays, caps, global pause and read-only integration readiness.
+The main action is Activate campaign, not Send to customer. A separately labelled test preview may use a simulator; a
+real test send requires an explicitly selected test recipient and must not create live campaign enrollment.
+
+
+--- PAGE 7 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+7
+04 / FRONTEND CONTINUED
+Campaign settings and validation
+ Setting
+Example / allowed value
+Required validation
+Name and scope
+3-100 characters; selected
+shop/branches
+Tenant scope from auth; reject unauthorized
+branch/customer references.
+Preset / trigger
+Allowlisted trigger type
+Require type-specific fields; reject unknown rule
+operators.
+Timezone / send time
+Asia/Kolkata; 10:00
+Valid IANA zone and HH:mm. Store date-only
+occasions separately.
+Lead or delay
+Birthday -14 days; enquiry +2 days
+Bounded integer; valid before/after semantics; no
+negative absolute delay.
+Start/end and expiry
+Activation window; per-step
+useful-until
+A usable slot must exist. No send after
+benefit/event fulfillment deadline.
+Allowed hours / blackouts
+EXAMPLE 10:00-19:00; chosen dates
+Start inclusive/end exclusive; v1 rejects
+overnight/equal hours. Blackout adjustment may
+not exceed expiry.
+Leap-day rule
+FEB_28 / MAR_01 / LEAP_ONLY
+Explicit selection for recurring Feb 29 dates.
+Steps and stop conditions
+1-3 stable steps
+Increasing occasion/event offsets; no loops.
+Required reply/purchase/opt-out policy.
+Priority and caps
+EXAMPLE 1/24h and 3/7d marketing
+Tenant-wide across campaigns; owners may
+tighten inherited limits.
+Resume / outage policy
+Resume: FUTURE_ONLY; outage
+grace: 2h
+Product defaults; no silent bulk catch-up.
+Historical imports
+No backlog by default
+New imported customers may join future
+occurrences only.
+Required settings notice: "This module runs auto campaigns using an existing WhatsApp connection and
+approved templates. WhatsApp setup and template approval are managed by the integration developer."
+Do not add token entry, business verification, Create template or Submit for approval controls. The campaign developer
+must still enforce readiness at activation and execution.
+
+
+--- PAGE 8 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+8
+05 / CONTENT CONFIGURATION
+Message steps and template mapping
+ Field
+Behaviour
+stepId / step name
+Stable identifier survives edits. Never use array index as identity.
+Schedule
+Offset from occasion local date or source event time. v1 does not support arbitrary
+conditional loops.
+Prerequisite
+NONE or PREVIOUS_ACCEPTED. A reminder can require evidence that its invitation
+was accepted.
+Template
+One existing approved template ID + exact locale + immutable schema/content
+revision.
+Bindings
+Allowlisted source paths or approved literals: customer name, shop, validated offer,
+event date, product or appointment.
+Business validation
+Price, credit, inventory, venue, dates and links come from current authoritative
+records.
+Media / buttons
+Only adapter-supported template components with authorized tenant-owned media
+and valid links.
+Stop behaviour
+Sales default stopOnReply=true (staff hold), stopOnGoal=true (skip).
+MARKETING_OPT_OUT cancels promotions; CHANNEL_SUPPRESSED or deletion
+cancels all pending steps.
+Expiry
+Explicit useful-until rule; never wait indefinitely for a cap, stock or template.
+Preview and activation
+The server resolves bindings, checks types and renders the exact selected template. Missing required
+values produce a visible skip reason for affected customers. An unusable template, broken mapping source
+or missing connection blocks activation. An individual customer missing a birthday does not block the whole
+campaign.
+Dry runs persist a report, draft fingerprint and sample eligibility evidence; they create no live execution.
+Activation must reference a dry run for the same draft fingerprint. Zero current matches is a warning: a
+future stock event or birthday may still qualify.
+No silent language substitution, AI rewrite, invented offer, unresolved placeholder or automatic template switch. A
+changed template revision requires an explicit campaign revision. [M1]
+
+
+--- PAGE 9 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+9
+06 / LIFECYCLE
+Campaign lifecycle and published
+versions
+ DRAFT
+ VALIDATED
+ ACTIVE
+ PAUSED
+ Editing an active campaign
+ Create draft version N+1.
+Published version N keeps running.
+ Publish revision
+New enrollments use N+1.
+Existing enrollments retain N.
+ ARCHIVED
+No new enrollments; pending steps cancelled; history retained.
+Resume uses future-only behaviour by default, with missed steps logged.
+Version contract
+Save edits to a draft with expectedVersion. Activation freezes an immutable campaignVersion and records
+activatedBy, activatedAt, reviewFingerprint and nextEvaluationAt. Editing an active campaign creates
+another draft; publishing affects only new enrollments by default.
+Existing enrollments keep the trigger, sequence, audience snapshot and timezone they were created with.
+Live permission, customer deletion, stock, order state, global pause and template usability override every
+version.
+End and archive
+The configured endAt stops new enrollments and expires steps beyond the campaign deadline. Archive also
+cancels remaining unsubmitted work and preserves history. Neither operation recalls messages already
+accepted by the provider. Treat accepted and outcome-unknown executions conservatively.
+
+
+--- PAGE 10 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+10
+07 / CUSTOMER SELECTION
+Audience logic and eligibility
+Select eligible customers automatically. Use a controlled rules language, not arbitrary MongoDB filters or
+JavaScript from React. Every query includes tenant and permitted branch scope.
+{
+  "all": [
+    {"field": "customer.status", "op": "eq", "value": "ACTIVE"},
+    {"field": "preferences.weave", "op": "in", "value": ["silk"]}
+  ],
+  "any": [
+    {"field": "preferences.budgetMaxPaise", "op": "gte",
+     "value": 600000},
+    {"field": "tags", "op": "contains", "value": "occasionwear"}
+  ],
+  "none": [
+    {"field": "serviceIssueOpen", "op": "eq", "value": true}
+  ]
+}
+Semantics: all predicates must pass; any is optional but at least one must pass when present; none
+predicates must all fail. Missing fields fail ordinary comparisons. Empty any/none are neutral. An entirely
+empty audience is invalid unless the owner explicitly selects ALL_ELIGIBLE.
+Mandatory gates outside the editable audience
+- Valid, active customer and destination; marketing permission for promotional steps; channel suppression
+always respected.
+- Required trigger data and business eligibility, such as a valid occasion date or unresolved enquiry.
+- No duplicate enrollment for the same occurrence; no duplicate destination contact when household
+records overlap.
+- Permission and current business conditions are checked again when each step becomes due.
+Store a concise match explanation, such as "birthday in 14 days; opted in; silk preference". Do not infer
+religion, relationship status, birthday or partner contact details. Unsupported fields/operators fail validation
+rather than broadening the audience.
+
+
+--- PAGE 11 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+11
+08 / OCCASION SCENARIOS
+Birthday campaign: complete
+behaviour
+ D-14 / invitation
+Eligible customer + offer
+ One selected template
+ D-7 / follow-up
+Prior invitation accepted
+No reply / goal purchase
+ D0 / optional greeting
+ Explicit stop settings
+Still permission-eligible
+ Reply / qualifying purchase
+Reply holds sales steps; skip if held when due.
+ Goal purchase skips applicable sales steps.
+ Marketing opt-out / deletion
+Cancel this promotional sequence.
+Already accepted sends cannot be recalled.
+ The occurrence is the birthday year, not the send year.
+Every step has its own stable ID and one execution record.
+Required data and planning
+Read customer birthday month/day, recipient identity, permission and campaign timezone. Resolve the next
+annual occurrence using the explicit leap-day rule. EXAMPLE preset: invitation D-14 at 10:00; optional
+reminder D-7; optional greeting D0. Each step selects its own existing approved template.
+Eligibility and stop rules
+Recommended goal: an order explicitly tagged to this occasion or a staff-recorded shopping-complete
+event. An optional recent-purchase rule needs an explicit window; it must not claim every purchase was for
+the birthday. A goal skips applicable sales steps. A reply holds them for staff handling: if still held when due,
+skip that step. Explicit hold resolution allows only future steps to be re-evaluated. An optional greeting
+follows its own stop settings; permission and caps always apply.
+Occurrence and idempotency
+Occurrence ID: birthday:2027. A January 2027 invitation sent in December 2026 still uses 2027. One
+enrollment per campaign/customer/occurrence and one execution per stable step. Changing a template or
+birthday cannot automatically resend a completed annual step.
+
+
+--- PAGE 12 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+12
+08 / OCCASION SCENARIOS CONTINUED
+Anniversary, gifting and wedding
+campaigns
+ Scenario
+Plan and inputs
+Stop / edge cases
+Anniversary
+Voluntarily saved eventId + month/day.
+EXAMPLE invitation D-21, reminder D-7,
+greeting D0. Goal window and template
+chosen by owner.
+Removed date, opt-out, goal purchase,
+reply or expired benefit suppress the
+relevant steps. Distinguish multiple saved
+occasions by eventId.
+Gift reminder
+Reminder belongs to the customer who
+requested it. Save date, recipient label if
+volunteered, budget and selected template.
+Do not discover/message a partner. Gift
+bought or reminder deleted ends that
+occurrence.
+Wedding / family event
+Exact event date, requested categories,
+budget and actual tailoring/dispatch lead
+time. Example first invite D-45 when the shop
+needs that preparation time.
+Cancelled/postponed event, completed
+shopping or insufficient production time
+blocks outdated messages.
+Optional appointments
+Offer a real shopping/fitting slot through a
+supplied booking link.
+Do not claim an appointment is booked
+merely because the invitation was
+delivered.
+Stable identities
+Annual anniversary: anniversary:eventId:year. One-time wedding: wedding:eventId. Postponing a wedding
+revises the same event identity; it does not create a fresh campaign opportunity automatically. Recompute
+only unsubmitted steps, preserve accepted steps and log the old/new dates.
+Useful-before deadline
+A wedding invitation may expire before the wedding itself: latestUsefulAt = eventDate minus required
+fulfillment lead time. The planner must not move a blocked message into a slot after that deadline. If the
+event is too close, skip with INSUFFICIENT_LEAD_TIME and show the owner the reason.
+Date calculation is owned by this campaign developer. The other developer only supplies usable templates
+and WhatsApp readiness; approval work is not part of these scenarios.
+
+
+--- PAGE 13 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+13
+09 / MERCHANDISE SCENARIOS
+Festivals, collections and stock
+matching
+ Scenario
+Engine behaviour
+Send-time conditions
+Festival collection
+Owner creates seasonId, actual date,
+collection and audience. Example launch
+D-21 and optional follow-up D-7.
+Season/offer active; relevant sellable
+stock; recorded preferences. Never infer
+religion from names.
+New collection
+On collection.published, match customer
+preferences, budget and stated interests.
+One enrollment per customer/release.
+At least one eligible item remains.
+Collection and approved message
+bindings still match.
+Requested restock
+On a genuine sellable stock transition, join
+open product requests to exact SKU/variant.
+Request unresolved; exact
+colour/size/weave condition true; no
+relevant purchase or reservation conflict.
+Similar handloom arrival
+Use a separate matching rule and template
+family for similar pieces.
+Never call a similar item the exact
+requested piece or imply a reservation.
+Selected-stock offer
+Owner publishes offerId with eligible items,
+actual prices/terms and useful-until date.
+Matching stock and offer still valid; no
+fabricated scarcity or expired discount.
+Matching and fan-out
+Normalize preferences and product attributes into controlled values. Budget is integer minor units;
+size/colour/weave comparisons use recorded attributes. Store match reasons. One inventory receipt with
+several units must not send one message per unit. Consolidate multiple matches for a customer into one
+selected template payload when supported.
+Occurrence keys
+festival:seasonId; collection:releaseId; arrival:arrivalEventId:requestId; stockoffer:offerId. Restock event IDs
+must represent a true published availability change, not every stock recount. Replaying an event must not
+create new opportunities.
+A sent message does not reserve a unique saree. Recheck availability at execution and again before
+submission, while acknowledging a sale can still occur immediately after the check.
+
+
+--- PAGE 14 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+14
+10 / CUSTOMER LIFECYCLE SCENARIOS
+Enquiry, repeat purchase and
+win-back
+ Preset
+Trigger / example timing
+Exit and edge cases
+Unresolved enquiry
+Real enquiry ID and configured last-interaction
+timestamp. Example first nudge +24h, second
++72h from the same anchor.
+Stop/hold on reply, staff takeover,
+resolved enquiry, purchase or unavailable
+item. A record edit is not customer
+activity.
+Complete the outfit
+After a qualifying completed order; example
++5 days. Match compatible blouse, accessory
+or other stocked item.
+Suppress returned relevant lines,
+incompatible/unavailable complements,
+or already-purchased complements.
+First to second
+purchase
+First qualifying order; example +30 days with
+one optional later step.
+A second qualifying purchase stops the
+sequence. Full refund of the first
+invalidates its eligibility.
+Win-back
+Daily indexed evaluation of last qualifying
+purchase + chosen category threshold, e.g. 90
+or 180 days.
+A new purchase cancels old steps and
+resets the anchor. No purchase history is
+not a win-back audience.
+Purchase definition
+Default qualifying purchase requires a paid, completed order with positive non-refunded value.
+Pending/unpaid/cancelled orders do not count. Partial returns affect relevant lines and net amounts. The
+owning order service supplies authoritative status; this developer builds campaign aggregates and
+recomputation from those events.
+Inactivity is anchored, not repeated daily
+Store lastQualifyingOrderId, lastQualifyingPurchaseAt and aggregateVersion. Occurrence =
+winback:lastQualifyingOrderId:ruleId. Repeated daily scans reuse that occurrence. A new order resets it; a
+refund may restore an older anchor but must not resend an already completed occurrence.
+Reply handling
+A reply linked to a campaign message marks that enrollment. Without reliable message context,
+conservatively hold active sales sequences for that customer/store after a new inbound reply; do not claim
+campaign attribution. Staff can resolve the conversation hold, but missed or expired steps do not
+automatically replay.
+
+
+--- PAGE 15 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+15
+11 / BOUTIQUE SCENARIOS
+Boutique appointments and
+fulfillment
+ Campaign
+Plan
+Cancel / recompute rules
+Fitting appointment
+Confirmation after booking and optional
+reminder 24h before. Use real
+appointmentId, local time, branch and
+status.
+Cancelled/completed appointment stops
+reminders. Reschedule moves
+unsubmitted reminders; already-sent
+confirmation may require a distinct
+update event.
+Alteration milestone
+Trigger on actual stage change. Choose a
+stage-specific approved template.
+Do not imply the full outfit is ready when
+only a blouse or alteration stage is
+complete.
+Outfit ready
+On full ready-for-collection status; optional
+reminder after a configured uncollected
+interval.
+Collected/delivered/cancelled/rework
+state stops pending notices. If delivery is
+arranged, do not send pickup instructions.
+Delivery update
+Trigger on verified dispatched/delivered
+events, with valid tracking reference where
+applicable.
+Label creation alone is not dispatch.
+Ignore stale status versions and duplicate
+courier events.
+Service purpose and matching
+These are order-service sequences, separate from promotional campaigns. They use matching approved
+service templates and required order context. They do not consume the marketing cap, but still use
+per-order/step dedupe, permission policy, service contact spacing and quiet-hour settings.
+Readiness versions
+Occurrence examples: fitting:appointmentId; ready:orderId:readinessVersion; alteration:jobId:milestoneId.
+An order moving ready > rework > ready can have a new readiness version only for a genuine new event. A
+delayed old ready event must not override a current collected status.
+Store the latest authoritative entity version and compare it during planning and dispatch. If part of an order
+is ready, use explicitly approved partial-ready wording or skip; never silently downgrade the customer
+promise.
+
+
+--- PAGE 16 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+16
+12 / RETENTION SCENARIOS
+Loyalty, credit, referrals and events
+ Preset
+Engine inputs and timing
+Required checks
+VIP milestone
+Authoritative program/milestone
+qualification event; one recognition per
+stable milestone.
+Refunds may reverse eligibility before
+sending. Balance oscillations must not
+send repeated congratulations.
+Credit expiry
+Real creditId, positive balance, expiry and
+terms. Example reminder D-14 and D-3.
+Redeemed/expired/extended credit
+updates pending steps. Display current
+balance; never invent expiry urgency.
+Referral invitation
+Completed order + active program/link;
+example +7 days.
+Skip cancelled/refunded source orders or
+active complaints where policy
+suppresses marketing. Sending does not
+issue a reward.
+Exhibition / trunk show
+Published eventId, venue, date, capacity
+and chosen geography/interests. Example
+invitation D-14.
+Cancelled/full event or existing RSVP can
+stop generic invitations. Attendee
+reminders are separately configured
+steps.
+Stable occurrence identities
+vip:programId:milestoneId; credit:creditId; referral:orderId:programId; storeevent:eventId. Extending a
+credit expiry revises the same occurrence. A program revision alone must not regenerate previously sent
+recognition.
+Benefit ownership
+The campaign engine may reference a valid discount, store credit, appointment or referral benefit created
+by its owning module. It does not fabricate reward balances, award referral credit on message delivery, or
+use a customer review as an automatic condition for a reward.
+Owner explanations
+Show practical reasons: "Skipped: credit already redeemed", "Scheduled: event reminder tomorrow",
+"Stopped: customer already registered". These are business outcomes, not generic sending errors.
+
+
+--- PAGE 17 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+17
+13 / SCHEDULING ALGORITHM
+Scheduler, local time and recovery
+Three durable evaluation paths
+Path
+Algorithm
+Checkpoint
+Calendar planner
+At activation and periodic scans, resolve upcoming
+occurrences and upsert enrollments/steps within the
+planning horizon.
+Campaign/version + scan
+cursor + completedAt.
+Domain-event consumer
+Persist event; validate source/version; evaluate
+matching active campaigns; create or reconcile
+enrollments and steps.
+Unique producer event key +
+processed marker.
+Inactivity evaluator
+Scan an indexed nextEvaluationAt; verify latest order
+aggregate; enroll the due inactivity occurrence once.
+Customer/category aggregate
+version and nextEvaluationAt.
+EXAMPLE operations: plan every 15 minutes; claim due steps every minute; reconcile data nightly. Discover
+occasion dates from today minus the largest positive step offset through today plus the largest lead time
+plus 30 days. This includes future D+7 steps for a recently passed occasion. Reconcile existing active
+enrollments independently of that window. Never use one setTimeout per future message.
+For an existing enrollment, load its pinned campaignVersionId before upserting its stable steps. Never add steps from the
+newest active version to an older enrollment. Use bounded cursor batches and durable checkpoints.
+Time conversion
+For a date trigger: resolve occurrence local date, add signed calendar-day offset, apply the step local time,
+then convert with the campaign IANA timezone to UTC. Store original local date/time/zone and resolved
+dueAt. For an event delay, add elapsed duration to authoritative occurredAt, then fit the result into
+permitted local sending hours.
+DST rule: shift a nonexistent local time to the next valid instant; choose the first occurrence of a repeated
+local time. Feb 29 uses the selected annual policy. Date-only birthdays must never be converted through
+midnight UTC.
+Late work
+Normal activation/import and explicit resume use FUTURE_ONLY: elapsed steps are logged as skipped.
+EXAMPLE technical-outage grace is 2 hours, bounded by expiresAt, send hours and current relevance.
+Longer outages skip obsolete steps; never replay a backlog in a burst. A future optional greeting can still run
+after a missed invitation.
+Set expiresAt to the earliest applicable step lateness cutoff, campaign end and source latestUsefulAt. Moving a send into
+allowed hours cannot extend that deadline. A staff conversation hold is not a technical outage and does not earn catch-up
+grace.
+
+
+--- PAGE 18 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+18
+14 / DEDUPLICATION + CONTACT POLICY
+Duplicate prevention and campaign
+collisions
+enrollmentKey = tenantId + campaignId + customerId + occurrenceId
+executionKey  = enrollmentId + stableStepId
+deliveryKey   = executionId
+// Do not include campaign version, template revision, retry count,
+// worker ID or schedule time in these business-identity keys.
+One record per business step
+Use unique indexes and transaction-safe upserts. Repeated scans, webhook replay and publish operations
+reach the same enrollment/execution. Date corrections retain identity unless the occurrence year changes;
+use the correction rules on page 20. A new published version never makes an executed annual step eligible
+again.
+Deterministic collision resolution
+Before dispatch, lock/arbitrate by tenant + canonical destination. Among currently due eligible marketing
+steps choose highest priority, then earliest expiry, then stable creation time/ID. EXAMPLE priorities:
+birthday/anniversary 80, wedding 70, requested stock 60, festival 50, win-back 30. The owner can configure
+priorities within an allowlisted range.
+EXAMPLE default caps: one marketing contact per rolling 24 hours and three per rolling 7 days. Count
+reservations, accepted and uncertain submissions across all campaigns and duplicate customer records
+sharing a destination. The losing step is deferred to the next available slot only if it remains useful;
+otherwise record SKIPPED_CONTACT_CAP.
+Keep one rolling contact-ledger entry per execution, timestamped at reservation. Count entries in (now-window, now];
+accepted/unknown entries age out normally, while unresolved submissions also retain their in-flight lock. Only proven
+non-acceptance releases that attempt's reservation. A safe retry reserves again at the new attempt time under the same
+execution key, without double counting. Lease expiry alone never releases an uncertain contact.
+Boundaries
+Never combine templates to solve a collision. Never assume a later-arriving high-priority event can undo a
+message already submitted. Service steps have separate configured spacing and entity-level dedupe; a
+marketing template cannot bypass caps by claiming a service purpose.
+Retain occurrence/execution identity protection across data cleanup for the campaign replay horizon. Cleanup must not
+delete the only evidence that a birthday step was already sent.
+
+
+--- PAGE 19 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+19
+15 / EXECUTION ENGINE
+Execution, stop rules and progression
+ SCHEDULED / DEFERRED
+ EVALUATING
+ DISPATCHING
+ SKIPPED / CANCELLED
+ EXPIRED / BLOCKED
+ PROVIDER_ACCEPTED
+Later: delivered / read
+ OUTCOME_UNKNOWN
+ No automatic resend
+ Safe rejection
+Bounded retry if still eligible and unexpired.
+ Same execution and delivery key.
+ Campaign progression
+Each future step checks its prerequisite.
+ Acceptance is not a sale.
+Evaluation when due
+Claim one due step with a lease. Load its published rules and current customer, source, offer, stock,
+reply/goal state, template and connection. Check pause generation, date-plan revision, expiry,
+prerequisites, permission and contact capacity. Record a precise skip, block or deferral reason for every
+rejected candidate.
+Resolve late, then freeze
+Planned steps hold bindings and source references, not message bodies frozen weeks ahead. Resolve
+current values only when dispatch becomes due. Atomically reserve contact capacity and create the
+immutable delivery intent for the execution. Freeze recipient version, exact template revision, parameters
+and payload hash at that point.
+Continue only from evidence
+PREVIOUS_ACCEPTED checks the prior execution acceptance. Unknown or failed prior submission never
+counts as accepted. Delivery/read receipts do not count as replies or sales. Future independent steps may
+proceed only if their own rules allow it. An enrollment completes when all its steps have terminal business
+outcomes.
+Recovery and wake-up rules
+A reply hold is an enrollment flag, not a new execution state. BLOCKED_TEMPLATE wakes on readiness change or a
+bounded recovery scan. DEFERRED with WAITING_PREREQUISITE wakes on prior acceptance or its dueAt; skip at deadline if
+unmet. DEFERRED with RETRY_WAIT becomes due at retryAt and reuses its frozen intent. BLOCKED_STALE_INTENT stays
+blocked until expiry or explicit cancellation; never rewrite it. FAILED is terminal after permanent rejection or exhausted
+safe retries.
+
+
+--- PAGE 20 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+20
+16 / CHANGE SEMANTICS
+Pause, edit, source changes and
+resume
+ Action / change
+Required engine behaviour
+Pause campaign / global pause
+Stop new enrollment and new submissions. Increment pauseGeneration. Retain
+schedules and show in-progress submissions separately.
+Resume
+Preview affected counts; default FUTURE_ONLY. Recheck future work and skip
+missed/expired steps. No automatic message burst.
+Publish campaign revision
+New enrollments use new version; existing enrollments retain old rules. Show
+old-version enrollment counts.
+Change birthday / occasion date
+Same occurrence year: revise pending times and planRevision. Across years:
+cancel the obsolete unsent plan and evaluate the corrected year under
+FUTURE_ONLY. Preserve completed/unknown evidence; see correction note below.
+Reschedule appointment
+Move pending reminders; preserve sent confirmation. An explicit
+appointment-change event may generate a distinct update message.
+New customer destination
+Before dispatch, use only current verified identity and permission for that
+destination. After intent freeze, a change blocks that intent; never reroute it.
+Preference change / deletion
+MARKETING_OPT_OUT cancels promotional steps. CHANNEL_SUPPRESSED or
+deletion cancels all pending steps. Recheck at dispatch; later opt-in never
+resurrects cancelled occurrences.
+Goal purchase / staff completion
+Apply each step's stopOnGoal. Optional greeting follows its separate rule; never
+bypass channel permission.
+Reply / staff handling
+stopOnReply=true creates an enrollment hold. Keep future steps scheduled; at due
+time, skip if still held. Staff resolution re-evaluates future steps only.
+Template paused / removed
+Block affected steps with fix owner. Once restored, re-evaluate only unchanged
+useful work; no silent replacement.
+Across-year correction: link old/new enrollments with a correctionGroupId and retain the old pinned version when creating
+the replacement. Existing target enrollment keeps its version. In that correction group, accepted/unknown stable steps
+suppress replacement copies. Preserve old evidence and never attach a December 2026 date to birthday:2027. Ordinary
+later annual occurrences are not part of this correction group.
+Replan only executions with deliveryIntentId=null. Once an intent exists, changed date/price/destination or relevant source
+bindings block it as stale, even after proven rejection; safe retries retain the exact frozen payload. Atomically update
+enrollment planRevision and affected execution revisions/schedules. Final submission must compare the same execution
+revision, so a racing replan invalidates the claim.
+V1 does not migrate active enrollments to a new campaign version automatically. If the owner needs different content for
+existing customers, pause the old campaign and use an explicit reviewed future enhancement; changing stepId to force a
+resend is not permitted.
+
+
+--- PAGE 21 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+21
+17 / DATA MODEL
+MongoDB collections and
+relationships
+ Collection
+Responsibility / key fields
+campaigns
+Stable campaign ID, tenantId, status, activeVersionId, draftVersion,
+pauseGeneration, activation/end timestamps.
+campaignVersions
+Immutable trigger, audience, steps, timing, contact policy, goal/stop rules,
+publishedBy/At and review fingerprint.
+campaignEnrollments
+Campaign/version/customer/occurrence identity; source reference/version; status,
+reply hold, goal state, planRevision.
+campaignExecutions
+One step per enrollment: dueAt, expiresAt, local date/zone, state, prerequisite,
+lease, planRevision and deliveryIntentId.
+campaignEventInbox
+Producer event identity, tenant, entity ID/version, occurredAt, receivedAt, schema
+version and processing status.
+campaignCheckpoints
+Leased planner/event/inactivity scan cursors and evaluation health.
+campaignCustomerFacts
+Rebuildable order/interest aggregates, last qualifying purchase, nextEvaluationAt
+and authoritative source versions.
+campaignContactGates
+Destination-scoped mutex/version and bounded rolling contact
+reservations/accepted/unknown entries.
+campaignDeliveryIntents
+Immutable single-message payload, execution key, attempt status, provider ID and
+delivery evidence.
+campaignGoalEvents / audit
+Explicit staff/domain goal evidence and append-only configuration/operational
+history.
+campaignDryRuns
+Draft fingerprint, counts/reasons, sample plans, evaluatedAt and source snapshot
+metadata.
+Use BSON Date UTC instants, integer minor-unit money and explicit date-only objects. Tenant scope belongs
+on every collection. Keep message/phone data encrypted or protected; retain masked projections for
+routine history. The template/connection catalogue is a read-only integration dependency.
+
+
+--- PAGE 22 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+22
+17 / DATA MODEL - BIRTHDAY PRESET
+Campaign configuration example
+{
+  "campaignId": "cmp_birthday", "tenantId": "shop_a",
+  "name": "Birthday shopping", "version": 1,
+  "industry": "BOUTIQUE", "purpose": "MARKETING",
+  "trigger": {
+    "type": "ANNUAL_DATE", "field": "customer.birthday",
+    "leapDayPolicy": "FEB_28"
+  },
+  "timezone": "Asia/Kolkata",
+  "audience": {"mode": "ALL_ELIGIBLE"},
+  "goal": {"type": "OCCASION_TAGGED_OR_STAFF_COMPLETED"},
+  "steps": [
+    {
+      "stepId": "invitation", "offsetDays": -14,
+      "localTime": "10:00", "prerequisite": "NONE",
+      "templateRef": {"id": "tpl_birthday_invite", "revision": 3,
+                      "language": "en"},
+      "bindings": {"name": "customer.firstName",
+                   "shop": "shop.displayName"},
+      "stopOnReply": true, "stopOnGoal": true,
+      "maxLatenessMinutes": 120
+    },
+    {
+      "stepId": "followup", "offsetDays": -7,
+      "localTime": "10:00", "prerequisite": "PREVIOUS_ACCEPTED",
+      "templateRef": {"id": "tpl_birthday_followup", "revision": 1,
+                      "language": "en"},
+      "bindings": {"name": "customer.firstName"},
+      "stopOnReply": true, "stopOnGoal": true,
+      "maxLatenessMinutes": 120
+    }
+  ],
+  "priority": 80,
+  "resumePolicy": "FUTURE_ONLY",
+  "importPolicy": "FUTURE_ONLY",
+  "enabledBranches": ["branch_main"]
+}
+Illustrative IDs and template names; they are not approval claims. A third greeting step is optional. Its stop flags, template
+and deadline must be configured explicitly. Effective store-wide caps, send hours and permission rules remain mandatory
+even when not repeated in this version object.
+
+
+--- PAGE 23 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+23
+17 / DATA MODEL - EXECUTION RECORDS
+Enrollment, planned step and
+delivery data
+// campaignEnrollments
+{
+  "id": "enr_001", "tenantId": "shop_a",
+  "campaignId": "cmp_birthday", "campaignVersionId": "cv_001",
+  "customerId": "cus_001", "occurrenceId": "birthday:2027",
+  "sourceRef": {"type": "CUSTOMER_DATE", "id": "cus_001",
+                "version": 8},
+  "occasionLocalDate": "2027-01-05", "planRevision": 1,
+  "status": "ACTIVE", "replyHoldAt": null, "goalReachedAt": null
+}
+// campaignExecutions: planned, no rendered message yet
+{
+  "id": "exe_001", "tenantId": "shop_a",
+  "enrollmentId": "enr_001", "stepId": "invitation",
+  "dueAt": "2026-12-22T04:30:00Z",
+  "expiresAt": "2026-12-22T06:30:00Z",
+  "localDate": "2026-12-22", "localTime": "10:00",
+  "timezone": "Asia/Kolkata", "planRevision": 1,
+  "state": "SCHEDULED", "deliveryIntentId": null
+}
+// campaignDeliveryIntents: materialized only at dispatch
+{
+  "id": "di_001", "tenantId": "shop_a", "executionId": "exe_001",
+  "deliveryKey": "exe_001", "connectionId": "conn_shop_a",
+  "recipientVersion": 4, "encryptedRecipient": "<encrypted>",
+  "templateRef": {"id": "tpl_birthday_invite", "revision": 3,
+                  "language": "en"},
+  "parameters": {"name": "Lakshmi", "shop": "Sample Boutique"},
+  "payloadHash": "<canonical-hash>", "state": "SUBMITTING",
+  "attemptId": "attempt_001", "providerMessageId": null
+}
+10:00 Asia/Kolkata equals 04:30 UTC. Execution identity does not change when the date plan is corrected. Each attempt
+has its own ID, while retries preserve the same immutable delivery intent and business step identity.
+
+
+--- PAGE 24 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+24
+18 / INPUT EVENTS
+Domain events and source-data
+contracts
+{
+  "schemaVersion": 1, "producer": "orders",
+  "eventId": "evt_101", "tenantId": "shop_a",
+  "type": "order.completed", "entityId": "ord_001",
+  "entityVersion": 6,
+  "occurredAt": "2026-12-23T08:00:00Z",
+  "receivedAt": "2026-12-23T08:00:02Z",
+  "customerId": "cus_001",
+  "data": {
+    "paid": true, "status": "COMPLETED", "netPaise": 580000,
+    "occasionRef": "birthday:2027",
+    "lineRefs": ["line_001"]
+  }
+}
+Source
+Minimum contract
+Customer / permission
+Stable customer, verified destination/version, month/day dates, preferences,
+consent/suppression and data-change version.
+Orders / refunds
+Paid/completed/cancelled/refunded states, effective net amounts, line/product IDs,
+occasion/campaign references when recorded.
+Inventory / collection
+Published event identity, exact variants, sellable stock, prices and latest source
+version.
+Appointment / alteration
+Actual stage, branch, local date/time, readiness/reschedule versions and
+cancellation/collection state.
+Reply / preference events
+Authenticated connection/customer mapping, inbound time and message context
+when present; opt-out updates.
+Persist each event before acknowledging. Process its effects and processed marker atomically or through a
+recoverable outbox. Event payload is a hint; fetch current authoritative state before scheduling sensitive
+claims. An older event cannot restore a state superseded by a newer entity version.
+A stale timestamp, unavailable source or incompatible schema produces a visible processing error/quarantine state. Do not
+silently treat missing data as eligible.
+
+
+--- PAGE 25 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+25
+19 / MONGODB IMPLEMENTATION
+Indexes, transactions and worker
+claims
+db.campaignVersions.createIndex(
+  {tenantId: 1, campaignId: 1, version: 1}, {unique: true});
+db.campaignEnrollments.createIndex(
+  {tenantId: 1, campaignId: 1, customerId: 1, occurrenceId: 1},
+  {unique: true});
+db.campaignExecutions.createIndex(
+  {tenantId: 1, enrollmentId: 1, stepId: 1}, {unique: true});
+db.campaignExecutions.createIndex(
+  {state: 1, dueAt: 1, _id: 1});
+db.campaignEventInbox.createIndex(
+  {tenantId: 1, producer: 1, eventId: 1}, {unique: true});
+db.campaignDeliveryIntents.createIndex(
+  {tenantId: 1, executionId: 1}, {unique: true});
+db.campaignContactGates.createIndex(
+  {tenantId: 1, destinationHash: 1}, {unique: true});
+Transactional boundaries
+1. Publish campaign version and change activeVersionId atomically. 2. For large event fan-outs, commit
+each bounded batch's enrollment/step effects with its cursor; mark the event processed only after the final
+batch. Replay resumes the cursor. 3. At submission, validate control generations, reserve capacity, freeze
+one intent and mark DISPATCHING atomically. Never perform provider HTTP inside a transaction callback.
+[D1, D2]
+Claims and control generations
+Claim due SCHEDULED/DEFERRED work with findOneAndUpdate into EVALUATING using an expiring unique
+lease token. Final submission CAS must match token, expected planRevision, current state and lease.until >
+serverNow, with expiresAt > serverNow. A stale worker must fail. Reclaim only expired pre-submission
+leases. [D3]
+Use a small campaign control-gate document for pauseGeneration and a tenant control gate for global
+pause. Submission transactions conditionally update the expected gate versions; pause changes those
+same documents. A snapshot read alone is insufficient to serialize pause against submission. Lock/update
+tenant, campaign and destination gates in a consistent order.
+Preserve unique enrollment/execution tombstones before pruning detailed records. Tombstone creation and detail removal
+must be atomic, and re-enrollment must check both live and retained keys. Annual replay protection lasts for the campaign
+lifetime; retention beyond that is an explicit product/data policy.
+
+
+--- PAGE 26 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+26
+20 / APPLICATION CONTRACTS
+Node API surface and permissions
+All routes are application APIs under /api/v1. Use authenticated tenant context and role checks. Route IDs
+never grant cross-tenant access. Mutations require idempotency keys; edits/publish additionally require
+expectedVersion.
+Endpoint
+Responsibility / result
+GET /campaign-presets
+Supported presets, required data and implemented capabilities.
+GET/POST /campaigns
+List campaigns or create a draft. No sends on create.
+GET /campaigns/:id
+Draft, active version, status, health and old-version enrollment
+counts.
+PATCH /campaigns/:id/draft
+Update allowlisted configuration; 409 on stale version.
+POST /campaigns/:id/validate
+Structured errors/warnings with fieldPath and resolutionOwner.
+POST /campaigns/:id/dry-runs
+Persist a read-only evaluation report; never create live jobs.
+POST /campaigns/:id/activate
+Publish a valid reviewed version and start planning. Returns next
+evaluation, not "sent".
+POST /campaigns/:id/publish-revision
+New immutable version; existing enrollments remain pinned.
+POST /campaigns/:id/pause|resume|archive
+Separate routes/actions with reviewed affected counts and
+defined lifecycle rules.
+GET /campaigns/:id/enrollments|history
+Separate paginated views; customer, occurrence, step, schedule,
+outcome and reason.
+POST /enrollments/:id/resolve-hold|mark-goal
+Separate audited staff actions; retain cause and supporting
+record.
+GET/PATCH /campaign-settings
+Effective timezone policy, send hours, blackouts, caps and global
+pause.
+GET /approved-template-catalogue
+Read-only integration catalogue; exact supported locale and
+revision.
+POST /internal/campaign-events
+Authenticated domain-event ingestion with durable dedupe.
+Shop staff may view activity and resolve permitted customer holds. Owner/admin roles manage campaigns and global
+policy. Internal event producers are scoped by tenant and event family. Provider delivery-status ingress is implemented or
+connected by this developer as described next.
+
+
+--- PAGE 27 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+27
+21 / WHATSAPP BOUNDARY
+Message delivery: a supporting
+adapter
+This is the delivery stage of the campaign engine. The other developer supplies the approved template
+catalogue, provisioned connection, server-side secret reference and account/template status changes. This
+developer implements dispatch and delivery-status processing, using an existing verified webhook router if
+available.
+sendCampaignStep({
+  executionId: "exe_001", deliveryKey: "exe_001",
+  connectionId: "conn_shop_a", customerId: "cus_001",
+  recipientVersion: 4,
+  template: { id: "tpl_birthday_invite", revision: 3, language: "en" },
+  parameters: { name: "Lakshmi", shop: "Sample Boutique" },
+  expiresAt: "2026-12-22T06:30:00Z"
+});
+Concern
+Required implementation
+One selected message
+One exact approved template per execution; bound variables only. No approval creation,
+automatic rewriting or SMS/email fallback.
+Final checks
+Campaign/global pause, source revision, permission, destination, template, contact
+reservation and expiry immediately before POST.
+Success semantics
+Persist provider message ID as accepted evidence. Later status events establish
+sent/delivered/read. Acceptance is not a sale.
+Ambiguous timeout
+Mark OUTCOME_UNKNOWN; do not automatically submit another copy. Correlate late
+evidence to the original attempt.
+Safe rejection
+Only documented non-acceptance can retry, with bounded backoff, same intent/key and
+all gates rechecked.
+Event ingestion
+Verify raw-byte provider signature or authenticated relay; durably store before
+acknowledgement; dedupe per status event, not only message ID.
+Status ordering
+Late sent cannot overwrite read/delivered. Missing read evidence is not unread. A read
+event implies delivery without supplying an exact earlier delivery timestamp.
+After transaction commit, recheck the dispatch deadline before POST. A sweeper moves stale DISPATCHING/SUBMITTING
+attempts to OUTCOME_UNKNOWN after the bounded request deadline; it never requeues them. Correlate late
+HTTP/webhook results by immutable attempt ID/provider ID even after the preparation lease expires. Reconcile only that
+attempt; late evidence cannot initiate a new send.
+Use server-side credentials and a pinned provider version. Current payload and event details come from official Meta
+references [M1-M4]. The user's phrase "direct sending" does not select Meta's separately named Direct Send capability;
+this release consumes approved campaign templates.
+
+
+--- PAGE 28 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+28
+22 / OWNER RESULTS
+Campaign reporting and
+explainability
+ Metric / view
+Precise meaning
+Eligible customers
+Customers matching the evaluated rules at a stated time. A changing estimate, not
+a guaranteed send count.
+Enrollments
+Unique customer/occurrence records; multiple steps do not multiply the customer
+count.
+Scheduled / deferred
+Pending executions, with next date and why any delay occurred.
+Skipped / cancelled / expired
+Business-rule outcomes with reasons; not provider failures.
+Accepted / delivered / read
+Separate evidence counts per execution. Do not show accepted as delivered.
+Replies / holds
+Recorded inbound evidence and applied hold rules; distinguish exact reply context
+from conservative customer-wide hold.
+Goal completions
+Explicit tagged purchase or staff/domain completion, with supporting record and
+configured rule.
+Linked orders / net sales
+Orders with recorded campaign evidence under a declared attribution rule;
+cancellations/refunds reduce net value.
+Customer timeline
+Why selected, occurrence, planned/actual dates, template revision, status events
+and stop reasons.
+Do not overstate sales impact
+Delivery, greeting or store visit cannot be assumed to be a sale. Prefer order campaign links,
+referral/redemption codes or explicit staff links. If a timing-based model is used, label it as an attribution
+assumption. Never count the same order in several campaigns when reporting a single attributed-sales
+total; define precedence and show unassigned orders separately.
+Sample owner explanations
+"Selected because birthday is in 14 days." "Follow-up stopped because a reply is being handled." "Festival
+message deferred because another marketing campaign already contacted this customer." "Outfit reminder
+skipped because the order was collected."
+Protect customer data in exports and logs. Log IDs, rule reasons, versions and timing by default; ordinary logs do not need
+full message bodies or phone numbers.
+
+
+--- PAGE 29 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+29
+23 / REQUIRED BRANCHES
+Edge-case decision register
+ Situation
+Decision the engine must implement
+Missing date / preference / language
+Skip affected customer with reason; block campaign only if the required data
+source or template configuration itself is unusable.
+Invalid date / Feb 29
+Validate month/day; apply explicit non-leap-year policy. Never invent a date.
+New activation during occasion cycle
+Skip elapsed steps, schedule valid future ones. Independent greeting need
+not depend on a missed invitation.
+Duplicate household phone
+Keep customer identities separate; enforce destination-level caps and avoid
+conflicting simultaneous messages.
+Customer deletion or withdrawn
+permission
+Cancel pending affected steps; do not recreate records from replayed old
+events.
+Source state changes after planning
+Recompute unsent schedule or stop by current state; never trust the original
+audience snapshot alone.
+Price or recipient changes during safe
+retry
+Block frozen intent as stale; do not mutate the payload under its existing
+delivery key.
+Busy cap / blackout / closed hours
+Move only within useful window; otherwise skip. Record both original due time
+and adjusted time.
+First step failed / unknown
+A dependent reminder does not advance. Independent steps still obey current
+eligibility and caps.
+Provider outage / worker restart
+Durable jobs survive. Grace/expiry controls recovery; unknown submissions
+do not requeue.
+Click pause while sending
+Unsubmitted work stops; already-dispatching work may still send. UI reports
+that boundary honestly.
+Campaign version edited mid-cycle
+Old enrollment retains version. Completed logical steps never regenerate
+from a new revision.
+Unknown event schema or stale entity
+event
+Quarantine/record reason; never broaden audience or roll current state
+backwards.
+No marketing inference should depend on a customer name, presumed relationship or guessed celebration. Eligibility must
+come from volunteered customer data or actual business records. The developer must expose skipped-reason counts so
+missing data is visible to owners.
+
+
+--- PAGE 30 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+30
+24 / QA MATRIX A
+Acceptance tests: campaign
+behaviour
+ ID
+Scenario
+Expected result
+A01
+Create birthday preset
+Trigger, audience, steps and timing editor; no manual
+recipient selection required.
+A02
+Activate reviewed valid draft
+Immutable version published; planner runs; no direct
+approval operation.
+A03
+Draft changed after dry run
+Activation rejects old review fingerprint.
+A04
+No eligible customer today
+Warning only when data source is usable; future
+customers can qualify.
+A05
+Missing template or mapping source
+Activation blocked with field and owner of the fix.
+A06
+Birthday invitation due D-14
+One customer/annual occurrence and selected template
+scheduled.
+A07
+January birthday invitation in December
+Occurrence year is upcoming birthday year.
+A08
+Feb 29 in non-leap year
+Configured Feb 28 / Mar 1 / leap-only behaviour, once.
+A09
+Anniversary record removed
+All pending steps for that saved occasion stop.
+A10
+Wedding postponed after invitation
+No repeat invitation; unsent relevant steps replan under
+same event ID.
+A11
+Customer replies after invitation
+Sales steps held; if still held at due time, skip. Staff
+resolution permits future steps only.
+A12
+Goal purchase recorded
+Applicable follow-ups stop; delivery alone never creates a
+goal.
+A13
+New purchase before win-back
+Old enrollment stops; inactivity anchor resets.
+A14
+Returned complementary source item
+Affected cross-sell is suppressed; unaffected lines follow
+defined rules.
+A15
+Requested exact size arrives
+Only matching unresolved requests qualify.
+A16
+Unique saree sells before dispatch
+No false availability message submitted.
+A17
+Outfit collected / fitting rescheduled
+Obsolete reminders stop or replan; current details used.
+A18
+Credit redeemed / expiry extended
+Outdated reminder suppressed or pending schedule
+recomputed.
+
+
+--- PAGE 31 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+31
+24 / QA MATRIX B
+Acceptance tests: scheduling and
+concurrency
+ ID
+Scenario
+Expected result
+B01
+Two planners evaluate same occurrence
+One enrollment and one execution per stable step.
+B02
+Duplicate stock/order event replay
+One logical event effect; no duplicate campaign contact.
+B03
+Consumer crashes before processed marker
+Replay transaction/outbox finishes safely without
+duplicate enrollment.
+B04
+Date corrected within / across years
+Correct year/key and future-only plan; correction lineage
+prevents repeats of accepted/unknown steps.
+B05
+Large historical customer import
+Future-only planning; no catch-up burst.
+B06
+Worker downtime beyond grace
+Expired/obsolete work skipped; useful future work
+remains.
+B07
+DST missing/repeated local hour
+Next-valid / first-occurrence policy used once.
+B08
+Blackout moves send after useful deadline
+Skip with reason instead of sending late.
+B09
+Birthday and festival compete
+Deterministic priority; atomic cap; loser deferred or
+skipped.
+B10
+Two CRM records share destination
+Destination cap enforced across records; identities not
+merged.
+B11
+Pause during evaluation
+Control-gate generation invalidates stale submission.
+B12
+Pause after submission starts
+UI says in progress/may send; no false recall.
+B13
+Resume with overdue jobs
+Future-only rule; no burst of missed steps.
+B14
+Publish revision adding a third step
+New enrollments use new version; older two-step
+enrollments remain two-step.
+B15
+Stale worker lease or planRevision
+CAS fails; stale worker makes zero provider requests.
+B16
+Late old ready event after collection
+Current entity version wins; no collection reminder.
+B17
+Refund restores previous inactivity anchor
+Old completed occurrence is not re-enrolled.
+B18
+Cleanup followed by historical replay
+Retained logical-key protection prevents duplicate step.
+B19
+Activate Jan 6 for Jan 5 occasion with D+7 step
+Elapsed steps skipped; valid Jan 12 step discovered.
+B20
+Source replan races final submission
+Execution-revision transaction/CAS chooses one order;
+stale claimant cannot send.
+
+
+--- PAGE 32 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+32
+24 / QA MATRIX C
+Acceptance tests: delivery and
+controls
+ ID
+Scenario
+Expected result
+C01
+Preview / dry run
+Zero live message requests and zero live execution jobs.
+C02
+Template paused after activation
+Affected step blocked with integration-owner reason.
+C03
+Opt-out after scheduling
+Pending promotion cancelled; final gate prevents
+submission.
+C04
+Changed destination permission
+No rerouting of frozen message; current
+identity/permission required.
+C05
+Missing variable / locale / invalid media
+No partial or substituted message; precise reason.
+C06
+Provider accepted, response lost
+Outcome unknown; no automatic second submission.
+C07
+Crash after DISPATCHING before HTTP
+Unknown until proven otherwise; no blind requeue.
+C08
+Proven throttle rejection
+Bounded retry, same key/payload; reservation
+released/reacquired once, all gates rechecked.
+C09
+Expiry reached during retry delay
+Expired; no late offer.
+C10
+Webhook repeated / read before delivered
+Idempotent evidence; no regression and no new send.
+C11
+Forged event / wrong tenant
+No mutation or cross-tenant data exposure.
+C12
+Status event before response persistence
+Durably retained and correlated to original attempt.
+C13
+Dependent reminder after unknown invitation
+No advancement without acceptance evidence.
+C14
+Service update labelled as marketing escape
+Registry/source-purpose rules prevent cap bypass.
+C15
+React refresh / duplicate activation click
+Stable idempotency returns same operation; no duplicate
+publish.
+C16
+Conflicting settings/draft edit
+409 version conflict; no silent overwrite.
+C17
+Delivered message without order evidence
+No sale/revenue fabricated.
+C18
+Order refund / multiple campaign links
+Net sales adjusted and single-attribution policy enforced.
+C19
+Template readiness restored
+Useful blocked work re-evaluated; expired work remains
+unsent.
+C20
+Frozen intent source changes before safe retry
+Intent blocked as stale; no payload rewrite or new
+automatic copy.
+These 58 scenarios define required automated/integration tests. Passing must assert database outcomes, scheduler
+behaviour and provider call counts, not only UI messages. Production sending also requires a provisioned test connection
+and real approved template smoke test.
+
+
+--- PAGE 33 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+33
+25 / DEVELOPER WALKTHROUGH
+Worked birthday campaign end to
+end
+Synthetic customer: Lakshmi, birthday 5 January, opted in, shop timezone Asia/Kolkata. Campaign version 1
+has invitation D-14, follow-up D-7 and an optional greeting D0. All selected templates are supplied by the
+integration developer.
+When
+Engine action
+Stored evidence
+15 Dec 2026: owner
+activates
+Validate settings/templates; publish v1;
+calendar planner finds 2027 occurrence.
+Campaign ACTIVE; enrollment
+birthday:2027; three stable step
+records.
+22 Dec 2026 10:00 IST
+04:30 UTC
+Invitation due. Recheck customer, offer,
+caps and template; bind current fields;
+submit one message.
+exe_invitation becomes accepted with
+provider ID; delivery evidence arrives
+separately.
+23 Dec: customer replies
+Record reply and create staff-handling hold;
+invitation history retained.
+replyHoldAt set; future follow-up
+remains scheduled with a hold
+indicator.
+24 Dec: occasion order
+completed
+Match explicit birthday occasion reference
+or staff-marked goal.
+goalReachedAt with order reference;
+sales follow-up remains stopped.
+29 Dec: follow-up date
+Evaluate current stops; do not send sales
+reminder.
+SKIPPED_GOAL_REACHED (goal
+precedes reply hold); reply evidence
+remains visible.
+5 Jan 2027: optional greeting
+If stop flags allow and
+permission/caps/template remain valid,
+send greeting. Otherwise record the reason.
+One greeting execution; no second
+invitation. Enrollment completes after
+all steps terminal.
+Reason precedence
+For a single displayed primary reason, evaluate: customer deletion/channel suppression; campaign/global
+stop; invalid source/date; expiry; configured goal/reply stop; content/readiness; prerequisite; contact cap.
+Store all relevant diagnostics, but use one stable primary reason for counts.
+Variation: birthday date corrected
+A correction within the 2027 occurrence replans only pending times under birthday:2027. If January 2027 is
+corrected to December 2026, cancel obsolete pending work and evaluate birthday:2026 under
+FUTURE_ONLY. Link the correction group and suppress any step already accepted/unknown in the original
+enrollment. Preserve history; never re-send an invitation merely because its date or template changed.
+
+
+--- PAGE 34 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+34
+26 / DELIVERY PLAN
+Implementation order and release
+checklist
+ Milestone
+What this developer delivers
+Acceptance evidence
+1. Foundation
+Typed campaign schema, presets, Mongo indexes,
+source adapters and template catalogue read
+interface.
+Schema/index checks and realistic
+fixtures.
+2. Reference campaign
+React editor + dry run + publish; birthday and
+anniversary planning, multi-step stops and history.
+End-to-end date/goal/reply tests.
+3. Reliable execution
+Durable scheduler, control gates, collision caps,
+one-message adapter and status consumer.
+Concurrency, expiry, pause and
+ambiguity tests.
+4. Other triggers
+Festival, stock, enquiry, purchase/inactivity, loyalty
+and boutique service evaluators.
+Each preset has its own scenario
+fixtures and stop conditions.
+5. Pilot readiness
+Reporting, reason counts, audit, global pause,
+recovery runbook and test-connection sends.
+All acceptance tests plus
+controlled pilot evidence.
+Integration handoff required from the other developer
+Ready connection identity, server-side secret reference, pinned provider capability/version, approved
+template ID/name/locale/category/schema/revision and status changes. Agree how authenticated provider
+events reach this developer's consumer. Template/account approval timelines must not be confused with
+campaign-engine completion.
+Operational safeguards
+Monitor planner lag, due-step age, skipped reasons, event backlog, unknown send outcomes and template
+blocks. Restart workers without losing schedules. Alert on stalled checkpoints; use bounded retries and
+tenant-level fair processing. Before pilot, record the expected load and test queue latency under
+provisioned provider limits.
+The implementation must demonstrate automatic customer selection and scheduled execution. A manual
+sender, a static mockup or a list of campaign ideas does not satisfy this delivery scope.
+
+
+--- PAGE 35 ---
+GROVASTRA  /  AUTO CAMPAIGNS
+Developer handoff  |  v2.0
+React + Node.js + MongoDB  |  13 October 2026
+35
+27 / SOURCE REGISTER
+References and specification
+boundaries
+This is a proposed product/engineering specification. Business rules and example defaults are design
+decisions for GroVastra; official sources below support the technical integration patterns. Checked during
+this session on 13 October 2026.
+[M1] Meta: message API and template payloads
+https://developers.facebook.com/documentation/business-messaging/whatsapp/reference/whatsapp-business-phone-numb
+er/message-api
+[M2] Meta: message status webhooks
+https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/reference/messages/status
+[M3] Meta: webhook endpoint and signature verification
+https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/create-webhook-endpoint/
+[M4] Meta: error codes and failure categories
+https://developers.facebook.com/documentation/business-messaging/whatsapp/support/error-codes
+[D1] MongoDB: atomicity and transactions
+https://www.mongodb.com/docs/manual/core/write-operations-atomicity/
+[D2] MongoDB: unique indexes
+https://www.mongodb.com/docs/manual/core/index-unique/
+[D3] MongoDB: findOneAndUpdate
+https://www.mongodb.com/docs/manual/reference/method/db.collection.findoneandupdate/
+[R1] React: effects versus user-triggered actions
+https://react.dev/learn/synchronizing-with-effects
+[B1] Reelo: auto-campaign reference page supplied by the user
+https://reelo.io/auto-campaigns
+Scope reminder for the developer
+Implement the auto-campaign engine: configuration, audience evaluation, triggers, schedules, step
+conditions, stops, execution and reporting. WhatsApp is its sole delivery channel in this release. Consume
+existing approved templates and provisioned account readiness; do not build approval workflows.
+This v2 document supersedes the earlier WhatsApp-sender handoff for assigning the work. Handloom stores, boutique
+owners and apparel shops are the intended businesses. No other industry workflow is included.
+
+

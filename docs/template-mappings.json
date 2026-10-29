@@ -1,0 +1,891 @@
+{
+    "schemaVersion": 1,
+    "notes": "Suggestions only. Never applied automatically. '*' = any preset. Preset keys must match GET /campaign-presets.",
+    "suggestions": [
+        {
+            "templateId": "tpl_gift_reminder",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "gift_wedding_reminder": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "event.localDate"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_gift_reminder_label",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "gift_wedding_reminder": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "event.recipientLabel"
+                        },
+                        "4": {
+                            "source": "event.localDate"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_wedding_invite",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "gift_wedding_reminder": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "event.localDate"
+                        },
+                        "3": {
+                            "source": "shop.displayName"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_wedding_followup",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "gift_wedding_reminder": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "event.localDate"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_wedding_booking",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "gift_wedding_reminder": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "event.localDate"
+                        },
+                        "3": {
+                            "source": "shop.displayName"
+                        },
+                        "4": {
+                            "source": "shop.bookingLink"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_hello_world",
+            "revision": 1,
+            "language": "en_US",
+            "presets": {
+                "*": {
+                    "bindings": {}
+                }
+            }
+        },
+        {
+            "templateId": "tpl_plain_text",
+            "revision": 1,
+            "language": "en_US",
+            "presets": {
+                "*": {
+                    "bindings": {}
+                }
+            }
+        },
+        {
+            "templateId": "tpl_order_confirmation",
+            "revision": 1,
+            "language": "en_US",
+            "presets": {
+                "WELCOME_NEW_CUSTOMER": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "literal",
+                            "value": "TEST-WELCOME"
+                        },
+                        "3": {
+                            "source": "shop.displayName"
+                        }
+                    }
+                },
+                "FIRST_TO_SECOND_PURCHASE": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "order.firstOrderNumber"
+                        },
+                        "3": {
+                            "source": "order.firstOrderDate"
+                        }
+                    }
+                },
+                "REWARD_EXPIRY_ALERT": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "credit.balanceDisplay"
+                        },
+                        "3": {
+                            "source": "credit.expiryDate"
+                        }
+                    }
+                },
+                "REWARD_CASHBACK_CONFIRMATION": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "credit.balanceDisplay"
+                        },
+                        "3": {
+                            "source": "credit.expiryDate"
+                        }
+                    }
+                },
+                "BIRTHDAY": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "literal",
+                            "value": "TEST-001"
+                        },
+                        "3": {
+                            "source": "occasion.localDate"
+                        }
+                    }
+                },
+                "gift_wedding_reminder": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "literal",
+                            "value": "TEST-OCCASION"
+                        },
+                        "3": {
+                            "source": "event.localDate"
+                        }
+                    }
+                },
+                "unresolved_enquiry": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "literal",
+                            "value": "TEST-ENQUIRY"
+                        },
+                        "3": {
+                            "source": "enquiry.localDate"
+                        }
+                    }
+                },
+                "complete_the_outfit": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "literal",
+                            "value": "TEST-OUTFIT"
+                        },
+                        "3": {
+                            "source": "anchor.itemName"
+                        }
+                    }
+                },
+                "requested_item_available": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "literal",
+                            "value": "TEST-REQUEST"
+                        },
+                        "3": {
+                            "source": "request.1.name"
+                        }
+                    }
+                },
+                "matching_collection": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "literal",
+                            "value": "TEST-COLLECTION"
+                        },
+                        "3": {
+                            "source": "collection.name"
+                        }
+                    }
+                },
+                "selected_stock_promotion": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "literal",
+                            "value": "TEST-OFFER"
+                        },
+                        "3": {
+                            "source": "offer.validUntilDate"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_birthday_invite",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "BIRTHDAY": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_birthday_followup",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "BIRTHDAY": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_winback_invite",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "WIN_BACK": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_welcome_new_customer",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "WELCOME_NEW_CUSTOMER": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_welcome_new_customer_offer",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "WELCOME_NEW_CUSTOMER": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "offer.amountRupees"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_repeat_visit_invite",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "FIRST_TO_SECOND_PURCHASE": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "order.firstOrderDate"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_repeat_visit_reward",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "FIRST_TO_SECOND_PURCHASE": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "credit.balanceDisplay"
+                        },
+                        "4": {
+                            "source": "credit.expiryDate"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_repeat_visit_followup",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "FIRST_TO_SECOND_PURCHASE": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_reward_expiry_alert",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "REWARD_EXPIRY_ALERT": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "credit.balanceDisplay"
+                        },
+                        "4": {
+                            "source": "credit.expiryDate"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_reward_expired_notice",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "REWARD_EXPIRY_ALERT": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "credit.balanceDisplay"
+                        },
+                        "4": {
+                            "source": "credit.expiryDate"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_cashback_confirmation",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "REWARD_CASHBACK_CONFIRMATION": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "credit.balanceDisplay"
+                        },
+                        "4": {
+                            "source": "credit.expiryDate"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_enquiry_followup_item",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "unresolved_enquiry": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "item.name"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_enquiry_followup_general",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "unresolved_enquiry": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_enquiry_followup_second",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "unresolved_enquiry": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "item.name"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_outfit_complete_one",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "complete_the_outfit": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "anchor.itemName"
+                        },
+                        "4": {
+                            "source": "complement.1.name"
+                        }
+                    }
+                },
+                "outfit_completion": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "anchor.itemName"
+                        },
+                        "4": {
+                            "source": "complement.1.name"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_outfit_complete_two",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "complete_the_outfit": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "anchor.itemName"
+                        },
+                        "4": {
+                            "source": "complement.1.name"
+                        },
+                        "5": {
+                            "source": "complement.2.name"
+                        }
+                    }
+                },
+                "outfit_completion": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "anchor.itemName"
+                        },
+                        "4": {
+                            "source": "complement.1.name"
+                        },
+                        "5": {
+                            "source": "complement.2.name"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_outfit_complete_followup",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "complete_the_outfit": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "complement.1.name"
+                        }
+                    }
+                },
+                "outfit_completion": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "complement.1.name"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_request_available_one",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "requested_item_available": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "request.1.nameWithVariant"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_request_available_two",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "requested_item_available": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "request.1.nameWithVariant"
+                        },
+                        "4": {
+                            "source": "request.2.nameWithVariant"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_request_available_followup",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "requested_item_available": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "request.1.nameWithVariant"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_collection_new_items",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "matching_collection": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "collection.name"
+                        },
+                        "4": {
+                            "source": "match.itemList"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_collection_new_simple",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "matching_collection": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "collection.name"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_collection_followup",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "matching_collection": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "collection.name"
+                        },
+                        "4": {
+                            "source": "match.itemList"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_stock_offer_items",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "selected_stock_promotion": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "offer.name"
+                        },
+                        "4": {
+                            "source": "offer.discountText"
+                        },
+                        "5": {
+                            "source": "match.itemList"
+                        },
+                        "6": {
+                            "source": "offer.validUntilDate"
+                        },
+                        "7": {
+                            "source": "offer.terms"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_stock_offer_simple",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "selected_stock_promotion": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "offer.name"
+                        },
+                        "4": {
+                            "source": "offer.discountText"
+                        },
+                        "5": {
+                            "source": "offer.validUntilDate"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "templateId": "tpl_stock_offer_followup",
+            "revision": 1,
+            "language": "en",
+            "presets": {
+                "selected_stock_promotion": {
+                    "bindings": {
+                        "1": {
+                            "source": "customer.firstName"
+                        },
+                        "2": {
+                            "source": "shop.displayName"
+                        },
+                        "3": {
+                            "source": "offer.name"
+                        },
+                        "4": {
+                            "source": "offer.discountText"
+                        },
+                        "5": {
+                            "source": "offer.validUntilDate"
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

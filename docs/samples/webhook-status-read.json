@@ -1,0 +1,57 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "1075305975271164",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15556369743",
+              "phone_number_id": "1290524220819472"
+            },
+            "contacts": [
+              {
+                "wa_id": "919999999999",
+                "user_id": "IN.REDACTED"
+              }
+            ],
+            "statuses": [
+              {
+                "id": "wamid.REDACTED_OUTBOUND_001",
+                "status": "read",
+                "timestamp": "1792308596",
+                "recipient_id": "919999999999",
+                "recipient_logical_id": "REDACTED",
+                "recipient_user_id": "IN.REDACTED",
+                "conversation": {
+                  "id": "8209b277805528582ae84839d801f183",
+                  "origin": {
+                    "type": "utility"
+                  }
+                },
+                "pricing": {
+                  "billable": true,
+                  "pricing_model": "PMP",
+                  "category": "utility",
+                  "type": "regular"
+                },
+                "internal_1p_only_data": {
+                  "webhook_extra_data": "REDACTED",
+                  "account_context": {
+                    "cs_id": "1290524220819472",
+                    "pma_id": "1075305975271164",
+                    "app_id": "1659390005577865",
+                    "account_context_type": "paid_messaging"
+                  }
+                }
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

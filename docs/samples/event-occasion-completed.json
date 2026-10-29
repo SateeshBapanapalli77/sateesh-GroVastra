@@ -1,0 +1,19 @@
+{
+    "schemaVersion": 1,
+    "producer": "crm",
+    "eventId": "evt_occ_005",
+    "tenantId": "shop_a",
+    "type": "occasion.completed",
+    "entityId": "gft_001",
+    "entityVersion": 2,
+    "occurredAt": "2026-11-12T11:00:00Z",
+    "receivedAt": "2026-11-12T11:00:02Z",
+    "customerId": "cus_002",
+    "data": {
+        "eventId": "gft_001",
+        "customerId": "cus_002",
+        "kind": "GIFT",
+        "completedBy": "STAFF",
+        "reason": "SHOPPING_COMPLETE"
+    }
+}

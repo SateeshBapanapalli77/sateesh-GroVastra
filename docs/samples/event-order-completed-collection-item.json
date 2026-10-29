@@ -1,0 +1,32 @@
+{
+    "schemaVersion": 1,
+    "producer": "orders",
+    "eventId": "evt_order_060",
+    "tenantId": "shop_a",
+    "type": "order.completed",
+    "entityId": "ord_060",
+    "entityVersion": 1,
+    "occurredAt": "2026-10-26T13:00:00Z",
+    "receivedAt": "2026-10-26T13:00:02Z",
+    "customerId": "cus_001",
+    "data": {
+        "paid": true,
+        "status": "COMPLETED",
+        "netPaise": 1850000,
+        "occasionRef": null,
+        "collectionRef": "collection:rel_mc_winter",
+        "lineRefs": [
+            "line_001"
+        ],
+        "lines": [
+            {
+                "lineId": "line_001",
+                "productId": "prd_mc_silk_red",
+                "variantId": "var_mc_silk_red_free",
+                "qty": 1,
+                "returnedQty": 0,
+                "lineNetPaise": 1850000
+            }
+        ]
+    }
+}

@@ -1,0 +1,1106 @@
+{
+  "notes": "Seed file for F3. Real templates come from Meta test mode. DUMMY ones are UI/dry-run only.",
+  "graphApiVersion": "v25.0",
+  "connection": {
+    "connectionId": "conn_shop_a",
+    "phoneNumberId": "1290524220819472",
+    "wabaId": "1075305975271164",
+    "secretRefEnvKey": "META_ACCESS_TOKEN"
+  },
+  "templates": [
+    {
+      "id": "tpl_hello_world",
+      "name": "hello_world",
+      "language": "en_US",
+      "category": "UTILITY",
+      "status": "APPROVED",
+      "revision": 1,
+      "sendable": true,
+      "source": "META_PROVIDED",
+      "variables": [],
+      "bodyText": null
+    },
+    {
+      "id": "tpl_plain_text",
+      "name": "jaspers_market_plain_text_v1",
+      "language": "en_US",
+      "category": "UNKNOWN",
+      "status": "APPROVED",
+      "revision": 1,
+      "sendable": true,
+      "source": "META_PROVIDED",
+      "variables": [],
+      "bodyText": null
+    },
+    {
+      "id": "tpl_order_confirmation",
+      "name": "jaspers_market_order_confirmation_v1",
+      "language": "en_US",
+      "category": "UTILITY",
+      "status": "APPROVED",
+      "revision": 1,
+      "sendable": true,
+      "source": "META_PROVIDED",
+      "variables": [
+        {
+          "index": 1,
+          "name": "customer_name",
+          "type": "text",
+          "sample": "John Doe"
+        },
+        {
+          "index": 2,
+          "name": "order_number",
+          "type": "text",
+          "sample": "123456"
+        },
+        {
+          "index": 3,
+          "name": "date",
+          "type": "text",
+          "sample": "Oct 18, 2026"
+        }
+      ],
+      "bodyText": null
+    },
+    {
+      "id": "tpl_birthday_invite",
+      "name": "birthday_invite",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        }
+      ],
+      "bodyText": "Hi {{1}}, your birthday is coming up! {{2}} has something special for you."
+    },
+    {
+      "id": "tpl_birthday_followup",
+      "name": "birthday_followup",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        }
+      ],
+      "bodyText": "Hi {{1}}, a gentle reminder to visit us before your birthday."
+    },
+    {
+      "id": "tpl_winback_invite",
+      "name": "winback_invite",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        }
+      ],
+      "bodyText": "Hi {{1}}, we miss you at {{2}}. Come and see what is new."
+    },
+    {
+      "id": "tpl_repeat_visit_invite",
+      "name": "repeat_visit_invite",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "order_date",
+          "type": "text",
+          "sample": "Oct 18, 2026"
+        }
+      ],
+      "bodyText": "Hi {{1}}, thank you for shopping with {{2}} on {{3}}. We would love to see you again soon."
+    },
+    {
+      "id": "tpl_repeat_visit_reward",
+      "name": "repeat_visit_reward",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "reward_balance",
+          "type": "text",
+          "sample": "₹150"
+        },
+        {
+          "index": 4,
+          "name": "expiry_date",
+          "type": "text",
+          "sample": "Feb 20, 2027"
+        }
+      ],
+      "bodyText": "Hi {{1}}, you have {{3}} in rewards with {{2}}, valid until {{4}}. We would love to see you again."
+    },
+    {
+      "id": "tpl_repeat_visit_followup",
+      "name": "repeat_visit_followup",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        }
+      ],
+      "bodyText": "Hi {{1}}, a gentle reminder from {{2}}: we would be happy to welcome you back."
+    },
+    {
+      "id": "tpl_reward_expiry_alert",
+      "name": "reward_expiry_alert",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "reward_balance",
+          "type": "text",
+          "sample": "₹150"
+        },
+        {
+          "index": 4,
+          "name": "expiry_date",
+          "type": "text",
+          "sample": "Feb 20, 2027"
+        }
+      ],
+      "bodyText": "Hi {{1}}, your rewards balance at {{2}} is {{3}} and is valid until {{4}}."
+    },
+    {
+      "id": "tpl_reward_expired_notice",
+      "name": "reward_expired_notice",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "reward_balance",
+          "type": "text",
+          "sample": "₹150"
+        },
+        {
+          "index": 4,
+          "name": "expiry_date",
+          "type": "text",
+          "sample": "Feb 20, 2027"
+        }
+      ],
+      "bodyText": "Hi {{1}}, your rewards of {{3}} at {{2}} expired on {{4}}. We hope to see you soon."
+    },
+    {
+      "id": "tpl_cashback_confirmation",
+      "name": "cashback_confirmation",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "reward_amount",
+          "type": "text",
+          "sample": "₹50"
+        },
+        {
+          "index": 4,
+          "name": "expiry_date",
+          "type": "text",
+          "sample": "Feb 20, 2027"
+        }
+      ],
+      "bodyText": "Hi {{1}}, thank you for shopping again with {{2}}. {{3}} has been added to your rewards, valid until {{4}}."
+    },
+    {
+      "id": "tpl_welcome_new_customer",
+      "name": "welcome_new_customer",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        }
+      ],
+      "bodyText": "Welcome to {{2}}, {{1}}! Thank you for shopping with us. We are happy to have you as our customer. Visit us again soon!"
+    },
+    {
+      "id": "tpl_welcome_new_customer_offer",
+      "name": "welcome_new_customer_offer",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "offer_amount",
+          "type": "text",
+          "sample": "50"
+        }
+      ],
+      "bodyText": "Welcome to {{2}}, {{1}}! Thank you for shopping with us. Enjoy ₹{{3}} off your next purchase."
+    },
+    {
+      "id": "tpl_gift_reminder",
+      "name": "gift_reminder",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "event_date",
+          "type": "text",
+          "sample": "Nov 20, 2026"
+        }
+      ],
+      "bodyText": "Hi {{1}}, you asked {{2}} to remind you about your gift occasion on {{3}}. We would be happy to help you choose something in time."
+    },
+    {
+      "id": "tpl_gift_reminder_label",
+      "name": "gift_reminder_label",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "recipient_label",
+          "type": "text",
+          "sample": "Mom"
+        },
+        {
+          "index": 4,
+          "name": "event_date",
+          "type": "text",
+          "sample": "Nov 20, 2026"
+        }
+      ],
+      "bodyText": "Hi {{1}}, you asked {{2}} to remind you about a gift for {{3}} on {{4}}. We would be happy to help you choose something in time."
+    },
+    {
+      "id": "tpl_wedding_invite",
+      "name": "wedding_invite",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "event_date",
+          "type": "text",
+          "sample": "Feb 14, 2027"
+        },
+        {
+          "index": 3,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        }
+      ],
+      "bodyText": "Hi {{1}}, with your family event on {{2}} coming up, {{3}} can help you plan your outfits in good time. Visit us to see our collection."
+    },
+    {
+      "id": "tpl_wedding_followup",
+      "name": "wedding_followup",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "event_date",
+          "type": "text",
+          "sample": "Feb 14, 2027"
+        }
+      ],
+      "bodyText": "Hi {{1}}, a gentle reminder from {{2}} about your event on {{3}}. Please visit us soon so we can have everything ready in time."
+    },
+    {
+      "id": "tpl_wedding_booking",
+      "name": "wedding_booking",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "event_date",
+          "type": "text",
+          "sample": "Feb 14, 2027"
+        },
+        {
+          "index": 3,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 4,
+          "name": "booking_link",
+          "type": "text",
+          "sample": "https://example.com/book"
+        }
+      ],
+      "bodyText": "Hi {{1}}, with your event on {{2}} coming up, you can book a shopping slot with {{3}} here: {{4}}. We look forward to seeing you."
+    },
+    {
+      "id": "tpl_enquiry_followup_item",
+      "name": "enquiry_followup_item",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "item",
+          "type": "text",
+          "sample": "Kanjivaram silk saree"
+        }
+      ],
+      "bodyText": "Hi {{1}}, thank you for asking {{2}} about {{3}}. We would be happy to help if you still have questions or would like to visit."
+    },
+    {
+      "id": "tpl_enquiry_followup_general",
+      "name": "enquiry_followup_general",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        }
+      ],
+      "bodyText": "Hi {{1}}, thank you for your enquiry at {{2}}. We would be happy to help if you still have questions or would like to visit."
+    },
+    {
+      "id": "tpl_enquiry_followup_second",
+      "name": "enquiry_followup_second",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "item",
+          "type": "text",
+          "sample": "Kanjivaram silk saree"
+        }
+      ],
+      "bodyText": "Hi {{1}}, a gentle reminder from {{2}} about your enquiry for {{3}}. Please reply or visit us whenever it suits you."
+    },
+    {
+      "id": "tpl_outfit_complete_one",
+      "name": "outfit_complete_one",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "purchased_item",
+          "type": "text",
+          "sample": "Kanjivaram silk saree"
+        },
+        {
+          "index": 4,
+          "name": "suggestion_one",
+          "type": "text",
+          "sample": "gold zari blouse"
+        }
+      ],
+      "bodyText": "Hi {{1}}, thank you for choosing {{2}}. To go with your {{3}}, you might like our {{4}}. Visit us whenever it suits you."
+    },
+    {
+      "id": "tpl_outfit_complete_two",
+      "name": "outfit_complete_two",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "purchased_item",
+          "type": "text",
+          "sample": "Kanjivaram silk saree"
+        },
+        {
+          "index": 4,
+          "name": "suggestion_one",
+          "type": "text",
+          "sample": "gold zari blouse"
+        },
+        {
+          "index": 5,
+          "name": "suggestion_two",
+          "type": "text",
+          "sample": "silk petticoat"
+        }
+      ],
+      "bodyText": "Hi {{1}}, thank you for choosing {{2}}. To go with your {{3}}, you might like our {{4}} or our {{5}}. Visit us whenever it suits you."
+    },
+    {
+      "id": "tpl_outfit_complete_followup",
+      "name": "outfit_complete_followup",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "suggestion_one",
+          "type": "text",
+          "sample": "gold zari blouse"
+        }
+      ],
+      "bodyText": "Hi {{1}}, a gentle reminder from {{2}}: our {{3}} would go nicely with your recent purchase. Visit us whenever it suits you."
+    },
+    {
+      "id": "tpl_request_available_one",
+      "name": "request_available_one",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "item",
+          "type": "text",
+          "sample": "Kanjivaram silk saree, red"
+        }
+      ],
+      "bodyText": "Hi {{1}}, good news from {{2}}: the {{3}} you asked about is now in stock. We cannot set items aside, so please check with the store before you visit."
+    },
+    {
+      "id": "tpl_request_available_two",
+      "name": "request_available_two",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "item_one",
+          "type": "text",
+          "sample": "Kanjivaram silk saree, red"
+        },
+        {
+          "index": 4,
+          "name": "item_two",
+          "type": "text",
+          "sample": "gold zari blouse, size 38"
+        }
+      ],
+      "bodyText": "Hi {{1}}, good news from {{2}}: the {{3}} and the {{4}} you asked about are now in stock. We cannot set items aside, so please check with the store before you visit."
+    },
+    {
+      "id": "tpl_request_available_followup",
+      "name": "request_available_followup",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "item",
+          "type": "text",
+          "sample": "Kanjivaram silk saree, red"
+        }
+      ],
+      "bodyText": "Hi {{1}}, a quick note from {{2}}: the {{3}} you asked about was in stock when we last checked. Please check with the store before you visit."
+    },
+    {
+      "id": "tpl_collection_new_items",
+      "name": "collection_new_items",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "collection_name",
+          "type": "text",
+          "sample": "Winter Silk Edit"
+        },
+        {
+          "index": 4,
+          "name": "items",
+          "type": "text",
+          "sample": "Kanjivaram silk saree and gold zari blouse"
+        }
+      ],
+      "bodyText": "Hi {{1}}, {{2}} has launched its {{3}} collection, which includes {{4}}. Availability can change, so please check with the store before you visit."
+    },
+    {
+      "id": "tpl_collection_new_simple",
+      "name": "collection_new_simple",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "collection_name",
+          "type": "text",
+          "sample": "Winter Silk Edit"
+        }
+      ],
+      "bodyText": "Hi {{1}}, {{2}} has just launched its {{3}} collection. Visit us whenever it suits you, and please check availability with the store first."
+    },
+    {
+      "id": "tpl_collection_followup",
+      "name": "collection_followup",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "collection_name",
+          "type": "text",
+          "sample": "Winter Silk Edit"
+        },
+        {
+          "index": 4,
+          "name": "items",
+          "type": "text",
+          "sample": "Kanjivaram silk saree"
+        }
+      ],
+      "bodyText": "Hi {{1}}, a gentle reminder from {{2}} about the {{3}} collection, including {{4}}. Availability can change, so please check with the store before you visit."
+    },
+    {
+      "id": "tpl_stock_offer_items",
+      "name": "stock_offer_items",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "offer_name",
+          "type": "text",
+          "sample": "Silk Week Offer"
+        },
+        {
+          "index": 4,
+          "name": "discount",
+          "type": "text",
+          "sample": "20% off"
+        },
+        {
+          "index": 5,
+          "name": "items",
+          "type": "text",
+          "sample": "Kanjivaram silk saree and gold zari blouse"
+        },
+        {
+          "index": 6,
+          "name": "valid_until",
+          "type": "text",
+          "sample": "Nov 15, 2026"
+        },
+        {
+          "index": 7,
+          "name": "terms",
+          "type": "text",
+          "sample": "Applies to selected items only"
+        }
+      ],
+      "bodyText": "Hi {{1}}, {{2}} has a selected offer called {{3}}: {{4}} on {{5}}. Valid until {{6}}. Terms: {{7}}. Availability can change, so please check with the store before you visit."
+    },
+    {
+      "id": "tpl_stock_offer_simple",
+      "name": "stock_offer_simple",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "offer_name",
+          "type": "text",
+          "sample": "Silk Week Offer"
+        },
+        {
+          "index": 4,
+          "name": "discount",
+          "type": "text",
+          "sample": "20% off"
+        },
+        {
+          "index": 5,
+          "name": "valid_until",
+          "type": "text",
+          "sample": "Nov 15, 2026"
+        }
+      ],
+      "bodyText": "Hi {{1}}, {{2}} has a selected offer called {{3}}: {{4}} on chosen pieces. The offer is valid until {{5}}. Availability can change, so please check with the store before you visit."
+    },
+    {
+      "id": "tpl_stock_offer_followup",
+      "name": "stock_offer_followup",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "offer_name",
+          "type": "text",
+          "sample": "Silk Week Offer"
+        },
+        {
+          "index": 4,
+          "name": "discount",
+          "type": "text",
+          "sample": "20% off"
+        },
+        {
+          "index": 5,
+          "name": "valid_until",
+          "type": "text",
+          "sample": "Nov 15, 2026"
+        }
+      ],
+      "bodyText": "Hi {{1}}, a reminder from {{2}} about the {{3}} offer: {{4}} on selected pieces, valid until {{5}}. Availability can change, so please check with the store before you visit."
+    }
+  ]
+}

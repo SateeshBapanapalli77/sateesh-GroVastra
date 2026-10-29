@@ -1,0 +1,21 @@
+{
+    "schemaVersion": 1,
+    "producer": "orders",
+    "eventId": "evt_order_020",
+    "tenantId": "shop_a",
+    "type": "order.completed",
+    "entityId": "ord_020",
+    "entityVersion": 1,
+    "occurredAt": "2026-11-12T10:50:00Z",
+    "receivedAt": "2026-11-12T10:50:02Z",
+    "customerId": "cus_002",
+    "data": {
+        "paid": true,
+        "status": "COMPLETED",
+        "netPaise": 780000,
+        "occasionRef": "gift:gft_001",
+        "lineRefs": [
+            "line_001"
+        ]
+    }
+}

@@ -1,0 +1,18 @@
+{
+    "schemaVersion": 1,
+    "producer": "crm",
+    "eventId": "evt_occ_004",
+    "tenantId": "shop_a",
+    "type": "occasion.cancelled",
+    "entityId": "wed_001",
+    "entityVersion": 3,
+    "occurredAt": "2026-11-20T10:00:00Z",
+    "receivedAt": "2026-11-20T10:00:02Z",
+    "customerId": "cus_001",
+    "data": {
+        "eventId": "wed_001",
+        "customerId": "cus_001",
+        "kind": "WEDDING",
+        "reason": "CUSTOMER_CANCELLED"
+    }
+}

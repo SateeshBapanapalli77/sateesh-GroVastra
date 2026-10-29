@@ -1,0 +1,24 @@
+{
+    "schemaVersion": 1,
+    "producer": "crm",
+    "eventId": "evt_occ_002",
+    "tenantId": "shop_a",
+    "type": "occasion.saved",
+    "entityId": "gft_001",
+    "entityVersion": 1,
+    "occurredAt": "2026-10-22T09:35:00Z",
+    "receivedAt": "2026-10-22T09:35:02Z",
+    "customerId": "cus_002",
+    "data": {
+        "kind": "GIFT",
+        "eventDate": "2026-11-20",
+        "recipientLabel": "Mom",
+        "budgetPaise": 800000,
+        "categories": [
+            "saree"
+        ],
+        "declaredByCustomer": true,
+        "source": "CUSTOMER_DECLARED",
+        "status": "ACTIVE"
+    }
+}

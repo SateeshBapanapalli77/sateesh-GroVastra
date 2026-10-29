@@ -1,0 +1,19 @@
+{
+    "schemaVersion": 1,
+    "producer": "ledger",
+    "eventId": "evt_credit_002",
+    "tenantId": "shop_a",
+    "type": "credit.updated",
+    "entityId": "crd_001",
+    "entityVersion": 2,
+    "occurredAt": "2026-11-01T10:00:00Z",
+    "receivedAt": "2026-11-01T10:00:02Z",
+    "customerId": "cus_001",
+    "data": {
+        "change": "EXPIRY_EXTENDED",
+        "unit": "PAISE",
+        "amount": 5000,
+        "expiresAt": "2027-02-20T18:29:59Z",
+        "status": "ACTIVE"
+    }
+}

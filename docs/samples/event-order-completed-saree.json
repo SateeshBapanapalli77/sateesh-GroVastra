@@ -1,0 +1,32 @@
+{
+    "schemaVersion": 1,
+    "producer": "orders",
+    "eventId": "evt_order_040",
+    "tenantId": "shop_a",
+    "type": "order.completed",
+    "entityId": "ord_040",
+    "entityVersion": 1,
+    "occurredAt": "2026-10-26T09:30:00Z",
+    "receivedAt": "2026-10-26T09:30:02Z",
+    "customerId": "cus_001",
+    "data": {
+        "paid": true,
+        "status": "COMPLETED",
+        "netPaise": 1200000,
+        "occasionRef": null,
+        "outfitRef": null,
+        "lineRefs": [
+            "line_001"
+        ],
+        "lines": [
+            {
+                "lineId": "line_001",
+                "productId": "prd_saree_001",
+                "variantId": "var_red",
+                "qty": 1,
+                "returnedQty": 0,
+                "lineNetPaise": 1200000
+            }
+        ]
+    }
+}

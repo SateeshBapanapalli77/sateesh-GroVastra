@@ -1,0 +1,25 @@
+{
+    "schemaVersion": 1,
+    "producer": "crm",
+    "eventId": "evt_occ_001",
+    "tenantId": "shop_a",
+    "type": "occasion.saved",
+    "entityId": "wed_001",
+    "entityVersion": 1,
+    "occurredAt": "2026-10-22T09:30:00Z",
+    "receivedAt": "2026-10-22T09:30:02Z",
+    "customerId": "cus_001",
+    "data": {
+        "kind": "WEDDING",
+        "eventDate": "2027-02-14",
+        "recipientLabel": null,
+        "budgetPaise": 5000000,
+        "categories": [
+            "saree",
+            "blouse"
+        ],
+        "declaredByCustomer": true,
+        "source": "CUSTOMER_DECLARED",
+        "status": "ACTIVE"
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "schemaVersion": 1,
+    "producer": "inventory",
+    "eventId": "evt_stock_002",
+    "tenantId": "shop_a",
+    "type": "stock.published",
+    "entityId": "pub_002",
+    "entityVersion": 1,
+    "occurredAt": "2026-10-27T09:00:00Z",
+    "receivedAt": "2026-10-27T09:00:02Z",
+    "customerId": null,
+    "data": {
+        "source": "RECOUNT",
+        "items": [
+            {
+                "productId": "prd_rq_blouse",
+                "variantId": "var_rq_blouse_m_red",
+                "sellableQtyBefore": 2,
+                "sellableQtyAfter": 2
+            }
+        ]
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "schemaVersion": 1,
+    "producer": "enquiries",
+    "eventId": "evt_enq_004",
+    "tenantId": "shop_a",
+    "type": "enquiry.resolved",
+    "entityId": "enq_001",
+    "entityVersion": 4,
+    "occurredAt": "2026-10-28T10:00:00Z",
+    "receivedAt": "2026-10-28T10:00:02Z",
+    "customerId": "cus_001",
+    "data": {
+        "status": "RESOLVED",
+        "reason": "ANSWERED"
+    }
+}

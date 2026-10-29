@@ -1,0 +1,13 @@
+{
+  "allowlist": [
+    "apps/api/src/templates/snapshot.ts",
+    "apps/api/src/templates/resolveTemplateParameters.ts",
+    "apps/api/src/templates/buildMetaTemplateBody.ts",
+    "apps/api/src/templates/bindingSources.ts",
+    "apps/api/src/templates/validateMapping.ts",
+    "apps/api/src/templates/normalizeBindings.ts",
+    "apps/api/src/templates/sanitize.ts",
+    "apps/api/src/templates/suggestions.ts",
+    "apps/api/src/templates/index.ts"
+  ]
+}

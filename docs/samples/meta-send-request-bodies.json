@@ -1,0 +1,67 @@
+{
+    "notes": "Derived from the curl commands for the three Meta test templates. 'to' is a placeholder.",
+    "endpoint": "https://graph.facebook.com/v25.0/1290524220819472/messages",
+    "cases": [
+        {
+            "name": "hello_world_no_variables",
+            "body": {
+                "messaging_product": "whatsapp",
+                "to": "919999999999",
+                "type": "template",
+                "template": {
+                    "name": "hello_world",
+                    "language": {
+                        "code": "en_US"
+                    }
+                }
+            }
+        },
+        {
+            "name": "plain_text_no_variables",
+            "body": {
+                "messaging_product": "whatsapp",
+                "to": "919999999999",
+                "type": "template",
+                "template": {
+                    "name": "jaspers_market_plain_text_v1",
+                    "language": {
+                        "code": "en_US"
+                    }
+                }
+            }
+        },
+        {
+            "name": "order_confirmation_three_variables",
+            "body": {
+                "messaging_product": "whatsapp",
+                "to": "919999999999",
+                "type": "template",
+                "template": {
+                    "name": "jaspers_market_order_confirmation_v1",
+                    "language": {
+                        "code": "en_US"
+                    },
+                    "components": [
+                        {
+                            "type": "body",
+                            "parameters": [
+                                {
+                                    "type": "text",
+                                    "text": "John Doe"
+                                },
+                                {
+                                    "type": "text",
+                                    "text": "123456"
+                                },
+                                {
+                                    "type": "text",
+                                    "text": "Oct 18, 2026"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

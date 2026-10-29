@@ -1,0 +1,30 @@
+{
+  "name": "grovastra-root",
+  "private": true,
+  "version": "1.0.0",
+  "description": "GroVastra Auto Campaigns Monorepo",
+  "scripts": {
+    "dev": "concurrently -k -p \"[{name}]\" -n \"API,WEB\" -c \"cyan.bold,magenta.bold\" \"pnpm --filter @grovastra/api dev\" \"pnpm --filter @grovastra/web dev\"",
+    "dev:api": "pnpm --filter @grovastra/api dev",
+    "dev:web": "pnpm --filter @grovastra/web dev",
+    "build": "pnpm -r build",
+    "seed": "pnpm --filter @grovastra/api seed:base",
+    "seed:base": "pnpm --filter @grovastra/api seed:base",
+    "seed:welcome": "pnpm --filter @grovastra/api seed:welcome",
+    "seed:gift-wedding": "pnpm --filter @grovastra/api seed:gift-wedding",
+    "seed:scenario": "pnpm --filter @grovastra/api seed:scenario",
+    "seed:reset": "pnpm --filter @grovastra/api seed:reset",
+    "seed:purge-mock": "pnpm --filter @grovastra/api seed:purge-mock",
+    "seed:status": "pnpm --filter @grovastra/api seed:status",
+    "seed:demo": "pnpm --filter @grovastra/api seed:demo",
+    "planner": "pnpm --filter @grovastra/api planner",
+    "worker": "pnpm --filter @grovastra/api worker",
+    "event-consumer": "pnpm --filter @grovastra/api event-consumer",
+    "test": "pnpm --filter @grovastra/api test",
+    "test:watch": "pnpm --filter @grovastra/api test:watch"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,16 @@
+{
+    "schemaVersion": 1,
+    "producer": "offers",
+    "eventId": "evt_off_003",
+    "tenantId": "shop_a",
+    "type": "offer.withdrawn",
+    "entityId": "off_sp_percent",
+    "entityVersion": 3,
+    "occurredAt": "2026-11-12T10:00:00Z",
+    "receivedAt": "2026-11-12T10:00:02Z",
+    "customerId": null,
+    "data": {
+        "status": "WITHDRAWN",
+        "reason": "REMOVED_BY_SHOP"
+    }
+}

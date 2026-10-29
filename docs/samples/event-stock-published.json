@@ -1,0 +1,29 @@
+{
+    "schemaVersion": 1,
+    "producer": "inventory",
+    "eventId": "evt_stock_001",
+    "tenantId": "shop_a",
+    "type": "stock.published",
+    "entityId": "pub_001",
+    "entityVersion": 1,
+    "occurredAt": "2026-10-26T09:30:00Z",
+    "receivedAt": "2026-10-26T09:30:02Z",
+    "customerId": null,
+    "data": {
+        "source": "RECEIPT",
+        "items": [
+            {
+                "productId": "prd_rq_saree_red",
+                "variantId": "var_rq_saree_red",
+                "sellableQtyBefore": 0,
+                "sellableQtyAfter": 1
+            },
+            {
+                "productId": "prd_rq_blouse",
+                "variantId": "var_rq_blouse_m_red",
+                "sellableQtyBefore": 0,
+                "sellableQtyAfter": 4
+            }
+        ]
+    }
+}

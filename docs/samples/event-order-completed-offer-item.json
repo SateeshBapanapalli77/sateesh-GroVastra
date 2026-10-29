@@ -1,0 +1,32 @@
+{
+    "schemaVersion": 1,
+    "producer": "orders",
+    "eventId": "evt_order_070",
+    "tenantId": "shop_a",
+    "type": "order.completed",
+    "entityId": "ord_070",
+    "entityVersion": 1,
+    "occurredAt": "2026-10-29T13:00:00Z",
+    "receivedAt": "2026-10-29T13:00:02Z",
+    "customerId": "cus_001",
+    "data": {
+        "paid": true,
+        "status": "COMPLETED",
+        "netPaise": 1480000,
+        "occasionRef": null,
+        "offerRef": "stockoffer:off_sp_percent",
+        "lineRefs": [
+            "line_001"
+        ],
+        "lines": [
+            {
+                "lineId": "line_001",
+                "productId": "prd_sp_silk_red",
+                "variantId": "var_sp_silk_red_free",
+                "qty": 1,
+                "returnedQty": 0,
+                "lineNetPaise": 1480000
+            }
+        ]
+    }
+}

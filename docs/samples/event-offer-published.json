@@ -1,0 +1,52 @@
+{
+    "schemaVersion": 1,
+    "producer": "offers",
+    "eventId": "evt_off_001",
+    "tenantId": "shop_a",
+    "type": "offer.published",
+    "entityId": "off_sp_percent",
+    "entityVersion": 1,
+    "occurredAt": "2026-10-28T09:30:00Z",
+    "receivedAt": "2026-10-28T09:30:02Z",
+    "customerId": null,
+    "data": {
+        "kind": "SELECTED_STOCK",
+        "name": "Silk Week Offer",
+        "status": "ACTIVE",
+        "publishedAt": "2026-10-28T09:30:00Z",
+        "validFrom": "2026-10-28T09:30:00Z",
+        "validUntil": "2026-11-15T18:29:59Z",
+        "discount": {
+            "type": "PERCENT_OFF",
+            "percent": 20,
+            "flatOffPaise": null
+        },
+        "terms": "Applies to selected silk sarees only",
+        "tags": [
+            "silk"
+        ],
+        "branchIds": [],
+        "items": [
+            {
+                "productId": "prd_sp_silk_red",
+                "variantIds": [
+                    "var_sp_silk_red_free"
+                ],
+                "offerPricePaise": null,
+                "position": 1
+            },
+            {
+                "productId": "prd_sp_silk_blue",
+                "variantIds": null,
+                "offerPricePaise": null,
+                "position": 2
+            },
+            {
+                "productId": "prd_sp_blouse_gold",
+                "variantIds": null,
+                "offerPricePaise": null,
+                "position": 3
+            }
+        ]
+    }
+}

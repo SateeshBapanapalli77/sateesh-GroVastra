@@ -1,0 +1,29 @@
+{
+    "schemaVersion": 1,
+    "producer": "requests",
+    "eventId": "evt_req_002",
+    "tenantId": "shop_a",
+    "type": "request.saved",
+    "entityId": "req_002",
+    "entityVersion": 1,
+    "occurredAt": "2026-10-21T11:00:00Z",
+    "receivedAt": "2026-10-21T11:00:02Z",
+    "customerId": "cus_002",
+    "data": {
+        "branchId": "branch_main",
+        "status": "OPEN",
+        "declaredByCustomer": true,
+        "source": "CUSTOMER_DECLARED",
+        "itemRef": {
+            "productId": "prd_rq_blouse",
+            "variantId": null
+        },
+        "conditions": {
+            "size": "m",
+            "colourFamily": "red",
+            "weave": null
+        },
+        "createdAt": "2026-10-21T11:00:00Z",
+        "expiresAt": null
+    }
+}

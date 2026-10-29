@@ -1,0 +1,38 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "1075305975271164",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15556369743",
+              "phone_number_id": "1290524220819472"
+            },
+            "statuses": [
+              {
+                "id": "wamid.FAILED_UNDELIVERABLE_001",
+                "status": "failed",
+                "timestamp": "1792308569",
+                "recipient_id": "919999999999",
+                "errors": [
+                  {
+                    "code": 131026,
+                    "title": "Message Undeliverable",
+                    "message": "Message Undeliverable",
+                    "error_data": {
+                      "details": "Recipient is not a valid WhatsApp user"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "$comment": "Legacy Visit Allowlist for GroVastra Auto Campaigns (Part 3 Scanner)",
+  "allowedPatterns": [
+    "tpl_repeat_visit_invite",
+    "tpl_repeat_visit_reward",
+    "tpl_repeat_visit_followup",
+    "repeat_visit_invite",
+    "repeat_visit_reward",
+    "repeat_visit_followup",
+    "repeat visit",
+    "Visit trigger removed: Welcome is purchase-based only (owner decision, 2026-10-24). The spec has no visit event."
+  ],
+  "allowedFiles": [
+    "apps/api/scripts/legacy-visit-allowlist.json",
+    "apps/api/src/scripts/checkLegacyVisit.ts",
+    "apps/api/src/scripts/cleanupLegacyVisit.ts",
+    "apps/api/tests/legacy-visit-removal.test.ts"
+  ]
+}

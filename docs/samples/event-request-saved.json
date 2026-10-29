@@ -1,0 +1,29 @@
+{
+    "schemaVersion": 1,
+    "producer": "requests",
+    "eventId": "evt_req_001",
+    "tenantId": "shop_a",
+    "type": "request.saved",
+    "entityId": "req_001",
+    "entityVersion": 1,
+    "occurredAt": "2026-10-20T10:00:00Z",
+    "receivedAt": "2026-10-20T10:00:02Z",
+    "customerId": "cus_001",
+    "data": {
+        "branchId": "branch_main",
+        "status": "OPEN",
+        "declaredByCustomer": true,
+        "source": "CUSTOMER_DECLARED",
+        "itemRef": {
+            "productId": "prd_rq_saree_red",
+            "variantId": "var_rq_saree_red"
+        },
+        "conditions": {
+            "size": null,
+            "colourFamily": null,
+            "weave": null
+        },
+        "createdAt": "2026-10-20T10:00:00Z",
+        "expiresAt": null
+    }
+}
