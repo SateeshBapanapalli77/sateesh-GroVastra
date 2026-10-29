@@ -113,6 +113,16 @@ export class CampaignValidationService {
     const isSelectedStock =
       ['selected_stock_promotion', 'SELECTED_STOCK_PROMOTION'].includes((draft as any).presetId || '') ||
       (draft.trigger as any)?.type === 'OFFER_PUBLICATION';
+    const isFestivalCollection =
+      ['festival_collection', 'FESTIVAL_COLLECTION', 'festival'].includes((draft as any).presetId || '') ||
+      (draft.trigger as any)?.type === 'OWNER_DATED_EVENT' ||
+      (draft.trigger as any)?.type === 'FESTIVAL_SEASON';
+    const isFittingAlteration =
+      ['fitting_alteration', 'FITTING_ALTERATION', 'fitting', 'alteration', 'fitting_appointment', 'alteration_milestone'].includes(
+        (draft as any).presetId || ''
+      ) ||
+      (draft.trigger as any)?.type === 'APPOINTMENT' ||
+      (draft.trigger as any)?.type === 'PRODUCTION_MILESTONE';
 
     // 2.5. Reject removed triggerMode field
     if ((draft as any).triggerMode !== undefined) {
@@ -222,6 +232,21 @@ export class CampaignValidationService {
         if (!Number.isInteger(maxItems) || maxItems < 1 || maxItems > 3) errors.push({ fieldPath: 'maxItemsInMessage', message: 'maxItemsInMessage must be an integer from 1 to 3', resolutionOwner: 'BOUTIQUE_OWNER' });
         if (!Number.isInteger(maxRecipients) || maxRecipients < 1 || maxRecipients > 100000) errors.push({ fieldPath: 'maxRecipientsPerOffer', message: 'maxRecipientsPerOffer must be an integer from 1 to 100000', resolutionOwner: 'BOUTIQUE_OWNER' });
         if (maxRecipients > 10000) warnings.push({ fieldPath: 'maxRecipientsPerOffer', message: 'Large selected-stock audience; verify the recipient limit', code: 'RECIPIENT_LIMIT_WARNING', resolutionOwner: 'BOUTIQUE_OWNER' });
+      }
+
+      if (isFestivalCollection) {
+        const audienceMode = (draft as any).audience?.mode || 'ALL_ELIGIBLE';
+        const matchMode = (draft as any).matchMode || 'STRICT';
+        if (!['PREFERENCE_MATCH', 'ALL_ELIGIBLE'].includes(audienceMode)) {
+          errors.push({ fieldPath: 'audience.mode', message: 'Invalid festival audience mode', resolutionOwner: 'BOUTIQUE_OWNER' });
+        }
+        if (!['STRICT', 'BROAD', 'LENIENT'].includes(matchMode)) {
+          errors.push({ fieldPath: 'matchMode', message: 'matchMode must be STRICT or LENIENT', resolutionOwner: 'BOUTIQUE_OWNER' });
+        }
+        const maxItems = (draft as any).maxItemsInMessage ?? 3;
+        if (!Number.isInteger(maxItems) || maxItems < 1 || maxItems > 3) {
+          errors.push({ fieldPath: 'maxItemsInMessage', message: 'maxItemsInMessage must be an integer from 1 to 3', resolutionOwner: 'BOUTIQUE_OWNER' });
+        }
       }
     }
 

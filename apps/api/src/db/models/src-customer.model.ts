@@ -12,6 +12,7 @@ export interface ISrcCustomer extends Document {
   tags: string[];
   status: string;
   branchId: string;
+  city?: string | null;
   deletedAt: Date | null;
   version: number;
   language: string;
@@ -144,6 +145,11 @@ const SrcCustomerSchema = new Schema<ISrcCustomer>(
     branchId: {
       type: String,
       required: true,
+      trim: true,
+    },
+    city: {
+      type: String,
+      default: null,
       trim: true,
     },
     deletedAt: {

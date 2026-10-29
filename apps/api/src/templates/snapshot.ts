@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { DateTime } from 'luxon';
 import {
   SourceCustomer,
   SourceOffer,
@@ -30,6 +31,10 @@ import { TenantModel } from '../db/models/tenant.model';
 import { clock as defaultClock } from '../services/clock';
 import { selectComplements } from '../presets/completeOutfit/matching';
 import { SrcCollectionModel } from '../db/models/src-collection.model';
+import { SrcSeasonModel } from '../db/models/src-season.model';
+import { SrcEventModel } from '../db/models/src-event.model';
+import { SrcAppointmentModel } from '../db/models/src-appointment.model';
+import { SrcAlterationModel } from '../db/models/src-alteration.model';
 import { matchSelectedStock } from '../presets/selectedStockPromotion/matching';
 
 export interface CanonicalParameter {
@@ -117,6 +122,7 @@ export interface BuildSnapshotContext {
     orderId?: string;
     anchorOrderId?: string;
   } | null;
+  execution?: any;
   tenant?: { name?: string; timezone?: string } | null;
   campaignVersion?: { timezone?: string } | null;
   order?: SourceOrder | any;
@@ -519,6 +525,191 @@ export async function buildResolutionSnapshot(
     }
   }
 
+  let festivalName: string | null = null;
+  let festivalDate: string | null = null;
+  let seasonName: string | null = null;
+
+  if (
+    neededDeps.has('festival') ||
+    (ctx.enrollment?.occurrenceId && ctx.enrollment.occurrenceId.startsWith('festival:')) ||
+    (ctx.execution as any)?.selectionSnapshot?.seasonId
+  ) {
+    const seasonId =
+      (ctx.execution as any)?.selectionSnapshot?.seasonId ||
+      (ctx.enrollment?.occurrenceId && ctx.enrollment.occurrenceId.startsWith('festival:')
+        ? ctx.enrollment.occurrenceId.split(':')[1]
+        : null);
+
+    if (seasonId) {
+      try {
+        const seasonDoc: any = await SrcSeasonModel.findOne({ tenantId: ctx.tenantId, seasonId }).lean();
+        if (seasonDoc) {
+          festivalName = seasonDoc.name;
+          seasonName = seasonDoc.name;
+          festivalDate = formatDateOnly(seasonDoc.festivalDate, effectiveTimezone);
+          if (!collection && (seasonDoc.releaseId || seasonDoc.collectionId)) {
+            collection = await SrcCollectionModel.findOne({
+              tenantId: ctx.tenantId,
+              releaseId: seasonDoc.releaseId || seasonDoc.collectionId,
+            }).lean();
+          }
+        }
+      } catch {}
+    }
+
+    if (!festivalName) {
+      festivalName = (ctx.execution as any)?.selectionSnapshot?.seasonName || (ctx.overrides as any)?.festivalName || 'Festival Collection';
+    }
+    if (!seasonName) {
+      seasonName = festivalName;
+    }
+    if (!matchItemList) {
+      const items = (ctx.execution as any)?.selectionSnapshot?.items;
+      if (items && Array.isArray(items) && items.length > 0) {
+        matchItemList = items.slice(0, 3).map((it: any) => it.name).filter(Boolean).join(', ');
+      }
+    }
+  }
+
+  let eventName: string | null = (ctx.overrides as any)?.eventName || null;
+  let eventVenue: string | null = (ctx.overrides as any)?.eventVenue || null;
+  let eventCity: string | null = (ctx.overrides as any)?.eventCity || null;
+  let eventRsvpLink: string | null = (ctx.overrides as any)?.eventRsvpLink || null;
+
+  if (
+    neededDeps.has('event') ||
+    (ctx.enrollment?.occurrenceId && ctx.enrollment.occurrenceId.startsWith('storeevent:')) ||
+    (ctx.execution as any)?.selectionSnapshot?.eventId
+  ) {
+    const eventId =
+      (ctx.execution as any)?.selectionSnapshot?.eventId ||
+      (ctx.enrollment?.occurrenceId && ctx.enrollment.occurrenceId.startsWith('storeevent:')
+        ? ctx.enrollment.occurrenceId.split(':')[1]
+        : null);
+
+    let eventDoc: any = null;
+    if (eventId) {
+      try {
+        eventDoc = await SrcEventModel.findOne({ tenantId: ctx.tenantId, eventId }).lean();
+      } catch {}
+    }
+
+    const selSnapshot = (ctx.execution as any)?.selectionSnapshot;
+    if (!eventName) {
+      eventName = selSnapshot?.eventName || selSnapshot?.title || eventDoc?.title || 'Special Showcase';
+    }
+    if (!eventDate) {
+      const rawDate = selSnapshot?.startDate || eventDoc?.startDate;
+      if (rawDate) {
+        eventDate = formatDateOnly(rawDate, effectiveTimezone);
+      }
+    }
+    const venueObj = selSnapshot?.venue || eventDoc?.venue;
+    if (!eventVenue && venueObj) {
+      eventVenue = venueObj.name ? `${venueObj.name}${venueObj.city ? `, ${venueObj.city}` : ''}` : venueObj.name || null;
+    }
+    if (!eventVenue) {
+      eventVenue = 'Our Boutique';
+    }
+    if (!eventCity) {
+      eventCity = selSnapshot?.city || eventDoc?.city || venueObj?.city || null;
+    }
+    if (eventRsvpLink === null || eventRsvpLink === undefined) {
+      eventRsvpLink = selSnapshot?.rsvpLinkUrl ?? eventDoc?.rsvpLinkUrl ?? '';
+    }
+  }
+
+  let appointmentServiceType: string | null = (ctx.overrides as any)?.appointmentServiceType || null;
+  let appointmentDate: string | null = (ctx.overrides as any)?.appointmentDate || null;
+  let appointmentTime: string | null = (ctx.overrides as any)?.appointmentTime || null;
+  let appointmentBranch: string | null = (ctx.overrides as any)?.appointmentBranch || null;
+  let appointmentStylistName: string | null = (ctx.overrides as any)?.appointmentStylistName || null;
+
+  if (
+    neededDeps.has('appointment') ||
+    (ctx.enrollment?.occurrenceId && ctx.enrollment.occurrenceId.startsWith('fitting:')) ||
+    (ctx.execution as any)?.selectionSnapshot?.appointmentId
+  ) {
+    const appointmentId =
+      (ctx.execution as any)?.selectionSnapshot?.appointmentId ||
+      (ctx.enrollment?.occurrenceId && ctx.enrollment.occurrenceId.startsWith('fitting:')
+        ? ctx.enrollment.occurrenceId.split(':')[1]
+        : null);
+
+    let appointmentDoc: any = null;
+    if (appointmentId) {
+      try {
+        appointmentDoc = await SrcAppointmentModel.findOne({ tenantId: ctx.tenantId, appointmentId }).lean();
+      } catch {}
+    }
+
+    const selSnapshot = (ctx.execution as any)?.selectionSnapshot;
+    if (!appointmentServiceType) {
+      appointmentServiceType = selSnapshot?.serviceType || appointmentDoc?.serviceType || 'Fitting Appointment';
+    }
+    const rawDate = selSnapshot?.scheduledAt || appointmentDoc?.scheduledAt;
+    if (rawDate) {
+      if (!appointmentDate) {
+        appointmentDate = formatDateOnly(rawDate, effectiveTimezone);
+      }
+      if (!appointmentTime) {
+        try {
+          const dt = DateTime.fromJSDate(new Date(rawDate)).setZone(effectiveTimezone);
+          appointmentTime = dt.isValid ? dt.toFormat('hh:mm a') : null;
+        } catch {}
+      }
+    }
+    if (!appointmentBranch) {
+      appointmentBranch = selSnapshot?.branchId || appointmentDoc?.branchId || 'Main Store';
+    }
+    if (!appointmentStylistName) {
+      appointmentStylistName = selSnapshot?.stylistName || appointmentDoc?.stylistName || null;
+    }
+  }
+
+  let alterationJobId: string | null = (ctx.overrides as any)?.alterationJobId || null;
+  let alterationGarment: string | null = (ctx.overrides as any)?.alterationGarment || null;
+  let alterationStage: string | null = (ctx.overrides as any)?.alterationStage || null;
+  let alterationTrialDate: string | null = (ctx.overrides as any)?.alterationTrialDate || null;
+  let alterationNotes: string | null = (ctx.overrides as any)?.alterationNotes || null;
+
+  if (
+    neededDeps.has('alteration') ||
+    (ctx.enrollment?.occurrenceId && ctx.enrollment.occurrenceId.startsWith('alteration:')) ||
+    (ctx.execution as any)?.selectionSnapshot?.jobId
+  ) {
+    const jobId =
+      (ctx.execution as any)?.selectionSnapshot?.jobId ||
+      (ctx.enrollment?.occurrenceId && ctx.enrollment.occurrenceId.startsWith('alteration:')
+        ? ctx.enrollment.occurrenceId.split(':')[1]
+        : null);
+
+    let alterationDoc: any = null;
+    if (jobId) {
+      try {
+        alterationDoc = await SrcAlterationModel.findOne({ tenantId: ctx.tenantId, jobId }).lean();
+      } catch {}
+    }
+
+    const selSnapshot = (ctx.execution as any)?.selectionSnapshot;
+    if (!alterationJobId) {
+      alterationJobId = selSnapshot?.jobId || alterationDoc?.jobId || jobId || 'ALT-JOB';
+    }
+    if (!alterationGarment) {
+      alterationGarment = selSnapshot?.garmentDescription || alterationDoc?.garmentDescription || 'Outfit Piece';
+    }
+    if (!alterationStage) {
+      alterationStage = selSnapshot?.stage || selSnapshot?.currentStage || alterationDoc?.currentStage || 'in progress';
+    }
+    const rawTrial = selSnapshot?.trialDate || alterationDoc?.trialDate;
+    if (rawTrial && !alterationTrialDate) {
+      alterationTrialDate = formatDateOnly(rawTrial, effectiveTimezone);
+    }
+    if (!alterationNotes) {
+      alterationNotes = selSnapshot?.notes || alterationDoc?.notes || '';
+    }
+  }
+
   const snapshot: BindingResolutionContext = {
     customer,
     shopName,
@@ -542,6 +733,23 @@ export async function buildResolutionSnapshot(
     collection,
     collectionName,
     matchItemList,
+    festivalName,
+    festivalDate,
+    seasonName,
+    eventName,
+    eventVenue,
+    eventCity,
+    eventRsvpLink,
+    appointmentServiceType,
+    appointmentDate,
+    appointmentTime,
+    appointmentBranch,
+    appointmentStylistName,
+    alterationJobId,
+    alterationGarment,
+    alterationStage,
+    alterationTrialDate,
+    alterationNotes,
     match: stockMatch
       ? {
           itemList: matchItemList,

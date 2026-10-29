@@ -25,6 +25,7 @@ import {
   Archive,
   UserCheck,
   HelpCircle,
+  Scissors,
 } from 'lucide-react';
 import {
   Campaign,
@@ -211,6 +212,23 @@ export default function CampaignsPage() {
       case 'selected_stock_promotion':
       case 'SELECTED_STOCK_PROMOTION':
         return ShoppingBag;
+      case 'festival_collection':
+      case 'FESTIVAL_COLLECTION':
+      case 'festival':
+        return Sparkles;
+      case 'exhibition_trunk_show':
+      case 'EXHIBITION_TRUNK_SHOW':
+      case 'exhibition':
+      case 'trunk_show':
+      case 'store_event':
+        return Calendar;
+      case 'fitting_alteration':
+      case 'FITTING_ALTERATION':
+      case 'fitting':
+      case 'alteration':
+      case 'fitting_appointment':
+      case 'alteration_milestone':
+        return Scissors;
       default:
         return ShoppingBag;
     }

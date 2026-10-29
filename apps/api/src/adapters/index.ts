@@ -9,4 +9,8 @@ export * from './occasion-source';
 export * from './enquiry-source';
 export * from './product-source';
 export * from './request-source';
+export * from './season-source';
+export * from './event-source';
+export * from './appointment-source';
+export * from './alteration-source';
 export { mockOccasionSource } from '../dev/mock/mock-occasion-source';

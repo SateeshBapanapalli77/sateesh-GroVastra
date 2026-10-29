@@ -46,6 +46,21 @@ import {
   SELECTED_STOCK_PROMOTION_ID,
   SELECTED_STOCK_PROMOTION_ALIAS,
 } from '../presets/selectedStockPromotion/definition';
+import {
+  FESTIVAL_COLLECTION_DEFINITION,
+  FESTIVAL_COLLECTION_ID,
+  FESTIVAL_COLLECTION_ALIAS,
+} from '../presets/festivalCollection/definition';
+import {
+  EXHIBITION_TRUNK_SHOW_DEFINITION,
+  EXHIBITION_TRUNK_SHOW_ID,
+  EXHIBITION_TRUNK_SHOW_ALIASES,
+} from '../presets/exhibitionTrunkShow/definition';
+import {
+  FITTING_ALTERATION_DEFINITION,
+  FITTING_ALTERATION_ID,
+  FITTING_ALTERATION_ALIASES,
+} from '../presets/fittingAlteration/definition';
 
 /**
  * Calculates nextEvaluationAt for campaign activation adhering to Spec p17, p29, p33:
@@ -313,14 +328,7 @@ export const CAMPAIGN_PRESETS: CampaignPreset[] = [
       importPolicy: 'FUTURE_ONLY',
     },
   },
-  {
-    id: 'festival',
-    name: 'Festival / Exhibition',
-    description: 'Owner-approved dated event. Seasonal shopping and store visits.',
-    triggerFamily: 'OWNER_DATED_EVENT',
-    implemented: false,
-    category: 'MARKETING',
-  },
+  FESTIVAL_COLLECTION_DEFINITION as unknown as CampaignPreset,
   {
     id: 'unresolved_enquiry',
     name: 'Unresolved Enquiry',
@@ -577,14 +585,7 @@ export const CAMPAIGN_PRESETS: CampaignPreset[] = [
     implemented: false,
     category: 'MARKETING',
   },
-  {
-    id: 'fitting_alteration',
-    name: 'Fitting / Alteration',
-    description: 'Appointment or production milestone. Keep boutique customers informed.',
-    triggerFamily: 'PRODUCTION_MILESTONE',
-    implemented: false,
-    category: 'SERVICE',
-  },
+  FITTING_ALTERATION_DEFINITION as unknown as CampaignPreset,
   {
     id: 'outfit_collection',
     name: 'Outfit Collection / Delivery',
@@ -593,16 +594,11 @@ export const CAMPAIGN_PRESETS: CampaignPreset[] = [
     implemented: false,
     category: 'SERVICE',
   },
-  {
-    id: 'stock_promotion',
-    name: 'Selected-stock Promotion',
-    description: 'Owner publishes valid stock offer. Match an offer to suitable customers.',
-    triggerFamily: 'STOCK_OFFER',
-    implemented: false,
-    category: 'MARKETING',
-  },
   WELCOME_NEW_CUSTOMER_DEFINITION,
   REQUESTED_ITEM_AVAILABLE_DEFINITION as CampaignPreset,
+  SELECTED_STOCK_PROMOTION_DEFINITION as unknown as CampaignPreset,
+  FESTIVAL_COLLECTION_DEFINITION as unknown as CampaignPreset,
+  EXHIBITION_TRUNK_SHOW_DEFINITION as unknown as CampaignPreset,
 ];
 
 export class CampaignService {
@@ -676,6 +672,29 @@ export class CampaignService {
           presetId.toLowerCase() === SELECTED_STOCK_PROMOTION_ALIAS.toLowerCase() ||
           presetId.toLowerCase() === 'selected-stock-promotion') &&
           (p.id === SELECTED_STOCK_PROMOTION_ID || p.id === SELECTED_STOCK_PROMOTION_ALIAS))
+        ||
+        ((presetId.toLowerCase() === FESTIVAL_COLLECTION_ID ||
+          presetId.toLowerCase() === FESTIVAL_COLLECTION_ALIAS.toLowerCase() ||
+          presetId.toLowerCase() === 'festival-collection' ||
+          presetId.toLowerCase() === 'festival') &&
+          (p.id === FESTIVAL_COLLECTION_ID || p.id === FESTIVAL_COLLECTION_ALIAS || p.id === 'festival'))
+        ||
+        ((presetId.toLowerCase() === EXHIBITION_TRUNK_SHOW_ID ||
+          presetId.toLowerCase() === 'exhibition_trunk_show' ||
+          presetId.toLowerCase() === 'exhibition' ||
+          presetId.toLowerCase() === 'trunk_show' ||
+          presetId.toLowerCase() === 'store_event' ||
+          presetId.toLowerCase() === 'exhibition-trunk-show') &&
+          (p.id === EXHIBITION_TRUNK_SHOW_ID || EXHIBITION_TRUNK_SHOW_ALIASES.includes(p.id as any)))
+        ||
+        ((presetId.toLowerCase() === FITTING_ALTERATION_ID ||
+          presetId.toLowerCase() === 'fitting_alteration' ||
+          presetId.toLowerCase() === 'fitting' ||
+          presetId.toLowerCase() === 'alteration' ||
+          presetId.toLowerCase() === 'fitting_appointment' ||
+          presetId.toLowerCase() === 'alteration_milestone' ||
+          presetId.toLowerCase() === 'fitting-alteration') &&
+          (p.id === FITTING_ALTERATION_ID || FITTING_ALTERATION_ALIASES.includes(p.id as any)))
     );
     if (!p) return undefined;
 

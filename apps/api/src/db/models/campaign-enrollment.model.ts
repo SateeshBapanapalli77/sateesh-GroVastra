@@ -66,6 +66,7 @@ export interface ICampaignEnrollment extends Document {
     newDate: string;
     oldVersion: number;
     newVersion: number;
+    reason?: string | null;
   }>;
   enquiryId?: string | null;
   itemRef?: {
@@ -324,6 +325,7 @@ const CampaignEnrollmentSchema = new Schema<ICampaignEnrollment>(
           newDate: { type: String, required: true },
           oldVersion: { type: Number, required: true },
           newVersion: { type: Number, required: true },
+          reason: { type: String, default: null },
         },
       ],
       default: [],

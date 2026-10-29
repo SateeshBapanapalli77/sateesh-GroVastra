@@ -12,6 +12,10 @@ export interface CustomerSeedRecord {
   marketingOptIn: boolean;
   channelSuppressed: boolean;
   preferences: {
+    source?: string;
+    categories?: string[];
+    weaves?: string[];
+    colours?: string[];
     weave?: string;
     budgetMaxPaise?: number;
     size?: string;
@@ -20,6 +24,7 @@ export interface CustomerSeedRecord {
   tags: string[];
   status: string;
   branchId: string;
+  city?: string | null;
   deletedAt?: Date | null;
   language: string;
   isLive: boolean;

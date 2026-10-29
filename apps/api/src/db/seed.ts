@@ -473,7 +473,7 @@ export async function seedDemo(): Promise<{ liveOwner: string | null }> {
 
   await seedBase();
 
-  const scenarios = ['welcome', 'first-repeat', 'gift-wedding', 'unresolved-enquiry', 'complete-outfit', 'selected-stock-promotion'];
+  const scenarios = ['welcome', 'first-repeat', 'gift-wedding', 'unresolved-enquiry', 'complete-outfit', 'selected-stock-promotion', 'festival-collection'];
   for (const sc of scenarios) {
     console.log(`\n--- Applying Scenario: ${sc} (without --live) ---`);
     await seedScenario(sc, { live: false });
@@ -507,6 +507,9 @@ async function insertCustomerBatch(
     else if (r.customerId.startsWith('cus_enq_')) docSeedGroup = 'unresolved-enquiry';
     else if (r.customerId.startsWith('cus_of_')) docSeedGroup = 'complete-outfit';
     else if (r.customerId.startsWith('cus_sp_')) docSeedGroup = 'selected-stock-promotion';
+    else if (r.customerId.startsWith('cus_fc_')) docSeedGroup = 'festival-collection';
+    else if (r.customerId.startsWith('cus_ex_')) docSeedGroup = 'exhibition-trunk-show';
+    else if (r.customerId.startsWith('cus_fa_')) docSeedGroup = 'fitting-alteration';
 
     const rec = r as any;
     const hasPhone = Boolean(r.rawPhone && r.rawPhone.trim());
@@ -552,6 +555,7 @@ async function insertCustomerBatch(
           tags: r.tags,
           status: r.status,
           branchId: r.branchId,
+          city: rec.city || null,
           deletedAt: r.deletedAt || null,
           version: 1,
           language: r.language,
@@ -4194,6 +4198,654 @@ export async function executeScenarioData(
         }, seedGroup, false)], session);
       }
 
+      if (scenario === 'festival-collection') {
+        const now = clock.now();
+        const seedGroup = 'festival-collection';
+        const festivalDate = new Date('2026-11-01T00:00:00.000Z');
+        const validUntil = new Date('2026-11-02T23:59:59.000Z');
+
+        const festivalCustomers: CustomerSeedRecord[] = Array.from({ length: 30 }, (_, index) => {
+          const n = String(index + 1).padStart(2, '0');
+          const live = Boolean(options.live && index === 0);
+          return {
+            customerId: `cus_fc_${n}`,
+            firstName: `Festival Customer ${n}`,
+            rawPhone: live ? (config.LIVE_CUSTOMER_PHONES?.split(',')[0] || '') : `91991100${n}01`,
+            birthday: null,
+            marketingOptIn: index !== 8,
+            channelSuppressed: index === 9,
+            preferences: index === 7 ? {} : {
+              weave: index % 3 === 0 ? 'silk' : (index % 3 === 1 ? 'cotton' : 'zari'),
+              budgetMaxPaise: index % 5 === 0 ? 1500000 : 3000000,
+              size: index % 4 === 0 ? 'M' : 'L',
+              colour: index % 2 === 0 ? 'red' : 'gold',
+            },
+            tags: index === 2 ? ['branch_two'] : ['festive'],
+            status: index === 10 ? 'DELETED' : 'ACTIVE',
+            branchId: index % 5 === 2 ? 'branch_two' : 'branch_main',
+            deletedAt: index === 10 ? now : null,
+            language: 'en',
+            isLive: Boolean(live),
+          };
+        });
+        await insertCustomerBatch('shop_a', festivalCustomers, seedGroup, session);
+
+        const festivalProducts = [
+          { tenantId: 'shop_a', productId: 'prd_fc_red_kanjivaram', name: 'Red Kanjivaram Silk Saree', category: 'saree', colourFamily: 'red', weave: 'silk', pricePaise: 2500000, status: 'ACTIVE', entityVersion: 1, variants: [{ variantId: 'v1', label: 'Standard', sellableQty: 5, version: 1 }] },
+          { tenantId: 'shop_a', productId: 'prd_fc_gold_zari_saree', name: 'Gold Zari Festive Saree', category: 'saree', colourFamily: 'gold', weave: 'zari', pricePaise: 2800000, status: 'ACTIVE', entityVersion: 1, variants: [{ variantId: 'v1', label: 'Standard', sellableQty: 3, version: 1 }] },
+          { tenantId: 'shop_a', productId: 'prd_fc_green_banarasi', name: 'Emerald Green Banarasi Saree', category: 'saree', colourFamily: 'green', weave: 'silk', pricePaise: 2200000, status: 'ACTIVE', entityVersion: 1, variants: [{ variantId: 'v1', label: 'Standard', sellableQty: 4, version: 1 }] },
+          { tenantId: 'shop_a', productId: 'prd_fc_cream_chanderi', name: 'Cream Chanderi Cotton Saree', category: 'saree', colourFamily: 'cream', weave: 'cotton', pricePaise: 1100000, status: 'ACTIVE', entityVersion: 1, variants: [{ variantId: 'v1', label: 'Standard', sellableQty: 6, version: 1 }] },
+          { tenantId: 'shop_a', productId: 'prd_fc_festive_lehenga', name: 'Festive Brocade Lehenga', category: 'lehenga', colourFamily: 'red', weave: 'silk', pricePaise: 3500000, status: 'ACTIVE', entityVersion: 1, variants: [{ variantId: 'v1', label: 'Standard', sellableQty: 2, version: 1 }] },
+          { tenantId: 'shop_a', productId: 'prd_fc_silk_kurta', name: 'Raw Silk Festive Kurta', category: 'kurta', colourFamily: 'gold', weave: 'silk', pricePaise: 750000, status: 'ACTIVE', entityVersion: 1, variants: [{ variantId: 'm', label: 'M', sellableQty: 4, version: 1 }, { variantId: 'l', label: 'L', sellableQty: 3, version: 1 }] },
+          { tenantId: 'shop_a', productId: 'prd_fc_zari_dupatta', name: 'Heavy Zari Dupatta', category: 'dupatta', colourFamily: 'gold', weave: 'zari', pricePaise: 800000, status: 'ACTIVE', entityVersion: 1, variants: [{ variantId: 'v1', label: 'Standard', sellableQty: 5, version: 1 }] },
+          { tenantId: 'shop_a', productId: 'prd_fc_silk_blouse', name: 'Festive Embroidered Blouse', category: 'blouse', colourFamily: 'red', weave: 'silk', pricePaise: 650000, status: 'ACTIVE', entityVersion: 1, variants: [{ variantId: 'm', label: 'M', sellableQty: 3, version: 1 }] },
+        ].map((doc) => applySeedLabels(doc, seedGroup, true));
+        await upsertMany('src_products', ['tenantId', 'productId'], festivalProducts, session);
+
+        const festivalCollection = [
+          {
+            tenantId: 'shop_a',
+            releaseId: 'rel_fc_diwali',
+            title: 'Diwali Handloom Festive Collection 2026',
+            description: 'Exclusive handwoven silks, brocades, and festive zari ensembles',
+            status: 'ACTIVE',
+            categories: ['saree', 'lehenga', 'kurta', 'dupatta', 'blouse'],
+            publishedAt: now,
+            entityVersion: 1,
+            items: festivalProducts.map((p) => ({
+              productId: p.productId,
+              name: p.name,
+              category: p.category,
+              colourFamily: p.colourFamily,
+              weave: p.weave,
+              pricePaise: p.pricePaise,
+              sellableQtyAfter: p.variants?.[0]?.sellableQty || 1,
+            })),
+          },
+        ].map((doc) => applySeedLabels(doc, seedGroup, true));
+        await upsertMany('src_collections', ['tenantId', 'releaseId'], festivalCollection, session);
+
+        const festivalSeasons = [
+          {
+            tenantId: 'shop_a',
+            seasonId: 'season_fc_diwali',
+            name: 'Diwali Festive Season 2026',
+            festivalDate,
+            releaseId: 'rel_fc_diwali',
+            collectionId: 'rel_fc_diwali',
+            description: 'Diwali festive handloom collection launch',
+            validFrom: now,
+            validUntil,
+            status: 'ACTIVE',
+            branchIds: ['branch_main', 'branch_two'],
+            entityVersion: 1,
+          },
+        ].map((doc) => applySeedLabels(doc, seedGroup, true));
+        await upsertMany('src_seasons', ['tenantId', 'seasonId'], festivalSeasons, session);
+
+        await upsertMany('campaigns', ['tenantId', 'campaignId'], [applySeedLabels({
+          campaignId: 'cmp_festival_collection',
+          tenantId: 'shop_a',
+          name: 'Festival Collection Launch',
+          presetId: 'festival_collection',
+          status: 'ACTIVE',
+          activeVersionId: 'ver_festival_collection_1',
+          draftVersion: 1,
+          pauseGeneration: 0,
+          enabledBranches: ['branch_main', 'branch_two'],
+          startAt: null,
+          activatedAt: now,
+          endAt: null,
+        }, seedGroup, false)], session);
+
+        await upsertMany('campaignVersions', ['tenantId', 'campaignId', 'version'], [applySeedLabels({
+          campaignId: 'cmp_festival_collection',
+          tenantId: 'shop_a',
+          version: 1,
+          name: 'Festival Collection Launch',
+          presetId: 'festival_collection',
+          purpose: 'MARKETING',
+          category: 'MARKETING',
+          priority: 50,
+          trigger: { type: 'OWNER_DATED_EVENT', anchor: 'FESTIVAL_DATE' },
+          audience: { mode: 'ALL_ELIGIBLE', rules: null },
+          audienceMode: 'ALL_ELIGIBLE',
+          matchMode: 'STRICT',
+          maxItemsInMessage: 3,
+          maxRecipientsPerOffer: 1000,
+          goalMode: 'COLLECTION_ITEM_OR_TAGGED',
+          steps: [
+            {
+              stepId: 'step_launch',
+              stepName: 'Festival Collection Launch',
+              offsetDays: -21,
+              localTime: '10:00',
+              prerequisite: 'NONE',
+              outsideHoursPolicy: 'DEFER_NEXT_DAY',
+              maxDeferralHours: 24,
+              maxLatenessMinutes: 720,
+              stopOnReply: true,
+              stopOnGoal: true,
+              templateRef: { id: 'tpl_collection_new_items', name: 'tpl_collection_new_items', language: 'en', revision: 1 },
+              bindings: {
+                '1': { source: 'customer.firstName' },
+                '2': { source: 'shop.displayName' },
+                '3': { source: 'festival.name', fallbackLiteral: 'Festive Edit' },
+                '4': { source: 'match.itemList', fallbackLiteral: 'our festive sarees' },
+              },
+            },
+            {
+              stepId: 'step_followup',
+              stepName: 'Festival Preparation Follow-up',
+              offsetDays: -7,
+              localTime: '10:00',
+              prerequisite: 'PREVIOUS_ACCEPTED',
+              outsideHoursPolicy: 'DEFER_NEXT_DAY',
+              maxDeferralHours: 24,
+              maxLatenessMinutes: 720,
+              stopOnReply: true,
+              stopOnGoal: true,
+              templateRef: { id: 'tpl_collection_followup', name: 'tpl_collection_followup', language: 'en', revision: 1 },
+              bindings: {
+                '1': { source: 'customer.firstName' },
+                '2': { source: 'shop.displayName' },
+                '3': { source: 'festival.name', fallbackLiteral: 'Festive Edit' },
+                '4': { source: 'match.itemList', fallbackLiteral: 'festive handloom pieces' },
+              },
+            },
+          ],
+          enabledBranches: ['branch_main', 'branch_two'],
+          timezone: 'Asia/Kolkata',
+          bindingsSchemaVersion: 2,
+          isPublished: true,
+          publishedAt: now,
+        }, seedGroup, false)], session);
+      }
+
+      if (scenario === 'exhibition-trunk-show') {
+        const now = clock.now();
+        const seedGroup = 'exhibition-trunk-show';
+
+        const exhibitionCustomers = Array.from({ length: 25 }, (_, i) => {
+          const index = i + 1;
+          const pad = String(index).padStart(2, '0');
+          const city = index % 3 === 0 ? 'Mumbai' : index % 3 === 1 ? 'Pune' : 'Delhi';
+          return {
+            tenantId: 'shop_a',
+            customerId: `cus_ex_${pad}`,
+            firstName: ['Aarav', 'Diya', 'Ishaan', 'Ananya', 'Rohan', 'Meera', 'Kabir', 'Tanvi', 'Aditya', 'Pooja', 'Vikram', 'Rhea', 'Siddharth', 'Fatima', 'Arjun', 'Sneha', 'Varun', 'Nisha', 'Karan', 'Simran', 'Rahul', 'Anjali', 'Dev', 'Kavita', 'Amit'][i],
+            rawPhone: `+91 98200 000${pad}`,
+            marketingOptIn: index !== 12,
+            channelSuppressed: index === 13,
+            verified: index !== 14,
+            preferences: {
+              source: 'CUSTOMER_DECLARED',
+              categories: index % 2 === 0 ? ['saree', 'lehenga'] : ['dupatta', 'blouse'],
+              weaves: index % 2 === 0 ? ['silk', 'zari'] : ['cotton'],
+              colours: ['red', 'gold'],
+              budgetMaxPaise: 5000000,
+            },
+            tags: index === 2 ? ['branch_two'] : ['vip', 'trunk_show'],
+            status: index === 15 ? 'DELETED' : 'ACTIVE',
+            branchId: index % 5 === 2 ? 'branch_two' : 'branch_main',
+            birthday: null,
+            city,
+            deletedAt: index === 15 ? now : null,
+            language: 'en',
+            isLive: Boolean(options.live),
+          };
+        });
+        await insertCustomerBatch('shop_a', exhibitionCustomers, seedGroup, session);
+
+        // 5 customers for shop_b tenant isolation
+        const shopBCustomers = Array.from({ length: 5 }, (_, i) => {
+          const index = i + 1;
+          const pad = String(index).padStart(2, '0');
+          return {
+            tenantId: 'shop_b',
+            customerId: `cus_ex_b_${pad}`,
+            firstName: ['Bhavna', 'Bharat', 'Bina', 'Brijesh', 'Balram'][i],
+            rawPhone: `+91 98211 000${pad}`,
+            birthday: null,
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            preferences: { source: 'CUSTOMER_DECLARED', categories: ['saree'] },
+            tags: ['trunk_show'],
+            status: 'ACTIVE',
+            branchId: 'branch_b_main',
+            city: 'Mumbai',
+            deletedAt: null,
+            language: 'en',
+            isLive: Boolean(options.live),
+          };
+        });
+        await insertCustomerBatch('shop_b', shopBCustomers, seedGroup, session);
+
+        // Store events for shop_a
+        const startDateMumbai = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+        const endDateMumbai = new Date(now.getTime() + 16 * 24 * 60 * 60 * 1000);
+        const startDateDelhi = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const endDateDelhi = new Date(now.getTime() + 32 * 24 * 60 * 60 * 1000);
+
+        const storeEvents = [
+          {
+            tenantId: 'shop_a',
+            eventId: 'evt_ex_mumbai_2026',
+            title: 'Mumbai Handloom Silk Trunk Show 2026',
+            eventType: 'TRUNK_SHOW',
+            venue: {
+              name: 'The Taj Mahal Palace',
+              address: 'Apollo Bunder, Colaba',
+              city: 'Mumbai',
+              googleMapsUrl: 'https://maps.google.com/?q=The+Taj+Mahal+Palace+Mumbai',
+            },
+            city: 'Mumbai',
+            startDate: startDateMumbai,
+            endDate: endDateMumbai,
+            capacity: 50,
+            registeredCount: 5,
+            rsvpLinkUrl: 'https://rsvp.example.com/mumbai-silk-trunk-show',
+            targetCities: ['Mumbai', 'Thane', 'Navi Mumbai', 'Pune'],
+            targetBranches: ['branch_main', 'branch_two'],
+            categories: ['saree', 'lehenga', 'dupatta'],
+            status: 'ACTIVE',
+            entityVersion: 1,
+            publishedAt: now,
+          },
+          {
+            tenantId: 'shop_a',
+            eventId: 'evt_ex_delhi_2026',
+            title: 'Delhi Heritage Exhibition 2026',
+            eventType: 'EXHIBITION',
+            venue: {
+              name: 'The Imperial',
+              address: 'Janpath, Connaught Place',
+              city: 'Delhi',
+              googleMapsUrl: 'https://maps.google.com/?q=The+Imperial+New+Delhi',
+            },
+            city: 'Delhi',
+            startDate: startDateDelhi,
+            endDate: endDateDelhi,
+            capacity: 100,
+            registeredCount: 0,
+            rsvpLinkUrl: 'https://rsvp.example.com/delhi-heritage-2026',
+            targetCities: ['Delhi', 'Noida', 'Gurugram'],
+            targetBranches: ['branch_main'],
+            categories: ['saree', 'shawl'],
+            status: 'ACTIVE',
+            entityVersion: 1,
+            publishedAt: now,
+          },
+        ].map((doc) => applySeedLabels(doc, seedGroup, true));
+        await upsertMany('src_events', ['tenantId', 'eventId'], storeEvents, session);
+
+        // Campaign cmp_exhibition_trunk_show
+        await upsertMany('campaigns', ['tenantId', 'campaignId'], [applySeedLabels({
+          campaignId: 'cmp_exhibition_trunk_show',
+          tenantId: 'shop_a',
+          name: 'Exhibition / Trunk Show',
+          presetId: 'exhibition_trunk_show',
+          status: 'ACTIVE',
+          activeVersionId: 'ver_exhibition_trunk_show_1',
+          draftVersion: 1,
+          pauseGeneration: 0,
+          enabledBranches: ['branch_main', 'branch_two'],
+          startAt: null,
+          activatedAt: now,
+          endAt: null,
+        }, seedGroup, false)], session);
+
+        await upsertMany('campaignVersions', ['tenantId', 'campaignId', 'version'], [applySeedLabels({
+          campaignId: 'cmp_exhibition_trunk_show',
+          tenantId: 'shop_a',
+          version: 1,
+          name: 'Exhibition / Trunk Show',
+          presetId: 'exhibition_trunk_show',
+          purpose: 'MARKETING',
+          category: 'MARKETING',
+          priority: 45,
+          trigger: { type: 'OWNER_DATED_EVENT', anchor: 'EVENT_START_DATE' },
+          audience: { mode: 'ALL_ELIGIBLE', rules: null },
+          audienceMode: 'ALL_ELIGIBLE',
+          matchMode: 'STRICT',
+          maxRecipientsPerOffer: 1000,
+          goalMode: 'STORE_EVENT_VISIT_OR_PURCHASE',
+          steps: [
+            {
+              stepId: 'step_invite',
+              stepName: 'Exhibition Invitation',
+              offsetDays: -14,
+              localTime: '10:00',
+              prerequisite: 'NONE',
+              outsideHoursPolicy: 'DEFER_NEXT_DAY',
+              maxDeferralHours: 24,
+              maxLatenessMinutes: 720,
+              stopOnReply: true,
+              stopOnGoal: true,
+              templateRef: { id: 'tpl_exhibition_invite', name: 'tpl_exhibition_invite', language: 'en', revision: 1 },
+              bindings: {
+                '1': { source: 'customer.firstName' },
+                '2': { source: 'shop.displayName' },
+                '3': { source: 'event.name', fallbackLiteral: 'Boutique Trunk Show' },
+                '4': { source: 'event.date', fallbackLiteral: 'Upcoming' },
+                '5': { source: 'event.venue', fallbackLiteral: 'Main Boutique' },
+                '6': { source: 'event.rsvpLink', fallbackLiteral: '' },
+              },
+            },
+            {
+              stepId: 'step_reminder',
+              stepName: 'Exhibition Reminder',
+              offsetDays: -3,
+              localTime: '10:00',
+              prerequisite: 'PREVIOUS_ACCEPTED',
+              outsideHoursPolicy: 'DEFER_NEXT_DAY',
+              maxDeferralHours: 24,
+              maxLatenessMinutes: 720,
+              stopOnReply: true,
+              stopOnGoal: true,
+              templateRef: { id: 'tpl_exhibition_reminder', name: 'tpl_exhibition_reminder', language: 'en', revision: 1 },
+              bindings: {
+                '1': { source: 'customer.firstName' },
+                '2': { source: 'shop.displayName' },
+                '3': { source: 'event.name', fallbackLiteral: 'Boutique Trunk Show' },
+                '4': { source: 'event.date', fallbackLiteral: 'Upcoming' },
+                '5': { source: 'event.venue', fallbackLiteral: 'Main Boutique' },
+              },
+            },
+          ],
+          enabledBranches: ['branch_main', 'branch_two'],
+          timezone: 'Asia/Kolkata',
+          bindingsSchemaVersion: 2,
+          isPublished: true,
+          publishedAt: now,
+        }, seedGroup, false)], session);
+      }
+
+      if (scenario === 'fitting-alteration') {
+        const now = clock.now();
+        const seedGroup = 'fitting-alteration';
+
+        const fittingCustomers = Array.from({ length: 20 }, (_, i) => {
+          const index = i + 1;
+          const pad = String(index).padStart(2, '0');
+          return {
+            tenantId: 'shop_a',
+            customerId: `cus_fa_${pad}`,
+            firstName: ['Aarohi', 'Bhavika', 'Charvi', 'Deepa', 'Esha', 'Falguni', 'Geeta', 'Harini', 'Ila', 'Jyoti', 'Kavya', 'Leela', 'Madhavi', 'Naina', 'Ojasvi', 'Prachi', 'Radha', 'Sadhana', 'Tara', 'Uma'][i],
+            rawPhone: `+91 98230 000${pad}`,
+            marketingOptIn: index !== 12,
+            channelSuppressed: index === 13,
+            verified: index !== 14,
+            preferences: {
+              source: 'CUSTOMER_DECLARED',
+              categories: ['saree', 'lehenga', 'blouse'],
+            },
+            tags: index === 2 ? ['branch_two'] : ['service', 'bridal'],
+            status: index === 15 ? 'DELETED' : 'ACTIVE',
+            branchId: index % 5 === 2 ? 'branch_two' : 'branch_main',
+            birthday: null,
+            city: 'Mumbai',
+            deletedAt: index === 15 ? now : null,
+            language: 'en',
+            isLive: Boolean(options.live),
+          };
+        });
+        await insertCustomerBatch('shop_a', fittingCustomers, seedGroup, session);
+
+        // 5 customers for shop_b tenant isolation
+        const shopBCustomers = Array.from({ length: 5 }, (_, i) => {
+          const index = i + 1;
+          const pad = String(index).padStart(2, '0');
+          return {
+            tenantId: 'shop_b',
+            customerId: `cus_fa_b_${pad}`,
+            firstName: ['Bhairavi', 'Bimla', 'Bandana', 'Bhumika', 'Barkha'][i],
+            rawPhone: `+91 98231 000${pad}`,
+            birthday: null,
+            marketingOptIn: true,
+            channelSuppressed: false,
+            verified: true,
+            preferences: { source: 'CUSTOMER_DECLARED', categories: ['saree'] },
+            tags: ['service'],
+            status: 'ACTIVE',
+            branchId: 'branch_b_main',
+            city: 'Mumbai',
+            deletedAt: null,
+            language: 'en',
+            isLive: Boolean(options.live),
+          };
+        });
+        await insertCustomerBatch('shop_b', shopBCustomers, seedGroup, session);
+
+        // Appointments for shop_a
+        const appointments = [
+          {
+            tenantId: 'shop_a',
+            appointmentId: 'appt_fa_01',
+            customerId: 'cus_fa_01',
+            branchId: 'branch_main',
+            serviceType: 'FITTING',
+            scheduledAt: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
+            status: 'BOOKED',
+            stylistName: 'Pooja',
+            notes: 'Bridal saree pleating & trial',
+            entityVersion: 1,
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            appointmentId: 'appt_fa_02',
+            customerId: 'cus_fa_02',
+            branchId: 'branch_main',
+            serviceType: 'BRIDAL_TRIAL',
+            scheduledAt: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
+            status: 'BOOKED',
+            stylistName: 'Rhea',
+            notes: 'Lehenga final trial with dupatta drape',
+            entityVersion: 1,
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            appointmentId: 'appt_fa_03',
+            customerId: 'cus_fa_03',
+            branchId: 'branch_two',
+            serviceType: 'MEASUREMENT',
+            scheduledAt: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000),
+            status: 'BOOKED',
+            stylistName: 'Meera',
+            notes: 'Custom blouse measurement',
+            entityVersion: 1,
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            appointmentId: 'appt_fa_04',
+            customerId: 'cus_fa_04',
+            branchId: 'branch_main',
+            serviceType: 'STYLING',
+            scheduledAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+            status: 'RESCHEDULED',
+            rescheduledFrom: new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000),
+            rescheduledAt: now,
+            stylistName: 'Pooja',
+            notes: 'Consultation rescheduled per customer request',
+            entityVersion: 2,
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            appointmentId: 'appt_fa_past',
+            customerId: 'cus_fa_05',
+            branchId: 'branch_main',
+            serviceType: 'FITTING',
+            scheduledAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+            status: 'COMPLETED',
+            stylistName: 'Pooja',
+            notes: 'Completed past fitting',
+            entityVersion: 1,
+            seedGroup,
+          },
+        ];
+        await upsertMany('src_appointments', ['tenantId', 'appointmentId'], appointments, session);
+
+        // Alterations for shop_a
+        const alterations = [
+          {
+            tenantId: 'shop_a',
+            jobId: 'alt_fa_01',
+            orderId: 'ord_fa_01',
+            customerId: 'cus_fa_06',
+            branchId: 'branch_main',
+            garmentDescription: 'Bridal Lehenga Blouse',
+            currentStage: 'STITCHING',
+            milestones: [
+              { milestoneId: 'ms_01', stage: 'RECEIVED', reachedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000) },
+              { milestoneId: 'ms_02', stage: 'CUTTING', reachedAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000) },
+              { milestoneId: 'ms_03', stage: 'STITCHING', reachedAt: now },
+            ],
+            trialDate: new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000),
+            notes: 'Sleeve alteration & padding adjustment',
+            entityVersion: 3,
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            jobId: 'alt_fa_02',
+            orderId: 'ord_fa_02',
+            customerId: 'cus_fa_07',
+            branchId: 'branch_main',
+            garmentDescription: 'Silk Saree Fall & Pico',
+            currentStage: 'TRIAL_READY',
+            milestones: [
+              { milestoneId: 'ms_10', stage: 'RECEIVED', reachedAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000) },
+              { milestoneId: 'ms_11', stage: 'TRIAL_READY', reachedAt: now, notes: 'Ready for trial / pickup' },
+            ],
+            trialDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000),
+            notes: 'Finished fall & pico finishing',
+            entityVersion: 2,
+            seedGroup,
+          },
+          {
+            tenantId: 'shop_a',
+            jobId: 'alt_fa_03',
+            orderId: 'ord_fa_03',
+            customerId: 'cus_fa_08',
+            branchId: 'branch_two',
+            garmentDescription: 'Anarkali Kurta Sleeves',
+            currentStage: 'CUTTING',
+            milestones: [
+              { milestoneId: 'ms_20', stage: 'RECEIVED', reachedAt: now },
+            ],
+            notes: 'Length shortening by 2 inches',
+            entityVersion: 1,
+            seedGroup,
+          },
+        ];
+        await upsertMany('src_alterations', ['tenantId', 'jobId'], alterations, session);
+
+        // Campaign cmp_fitting_alteration
+        await upsertMany('campaigns', ['tenantId', 'campaignId'], [applySeedLabels({
+          campaignId: 'cmp_fitting_alteration',
+          tenantId: 'shop_a',
+          name: 'Fitting / Alteration',
+          presetId: 'fitting_alteration',
+          status: 'ACTIVE',
+          activeVersionId: 'ver_fitting_alteration_1',
+          draftVersion: 1,
+          pauseGeneration: 0,
+          enabledBranches: ['branch_main', 'branch_two'],
+          startAt: null,
+          activatedAt: now,
+          endAt: null,
+        }, seedGroup, false)], session);
+
+        await upsertMany('campaignVersions', ['tenantId', 'campaignId', 'version'], [applySeedLabels({
+          campaignId: 'cmp_fitting_alteration',
+          tenantId: 'shop_a',
+          version: 1,
+          name: 'Fitting / Alteration',
+          presetId: 'fitting_alteration',
+          purpose: 'SERVICE',
+          category: 'SERVICE',
+          priority: 60,
+          trigger: { type: 'APPOINTMENT', anchor: 'APPOINTMENT_SCHEDULED_AT' },
+          audience: { mode: 'ALL_ELIGIBLE', rules: null },
+          audienceMode: 'ALL_ELIGIBLE',
+          matchMode: 'STRICT',
+          steps: [
+            {
+              stepId: 'appointment_confirmation',
+              stepName: 'Appointment Confirmation',
+              offsetDays: 0,
+              localTime: '10:00',
+              prerequisite: 'NONE',
+              outsideHoursPolicy: 'DEFER_NEXT_DAY',
+              maxDeferralHours: 24,
+              maxLatenessMinutes: 120,
+              stopOnReply: false,
+              stopOnGoal: true,
+              templateRef: { id: 'tpl_fitting_confirmation', name: 'tpl_fitting_confirmation', language: 'en', revision: 1 },
+              bindings: {
+                '1': { source: 'customer.firstName' },
+                '2': { source: 'shop.displayName' },
+                '3': { source: 'appointment.serviceType', fallbackLiteral: 'Fitting' },
+                '4': { source: 'appointment.date', fallbackLiteral: 'Upcoming' },
+                '5': { source: 'appointment.time', fallbackLiteral: '10:00 AM' },
+                '6': { source: 'appointment.branch', fallbackLiteral: 'Main Store' },
+              },
+            },
+            {
+              stepId: 'appointment_reminder',
+              stepName: 'Appointment Reminder',
+              offsetDays: -1,
+              localTime: '10:00',
+              prerequisite: 'NONE',
+              outsideHoursPolicy: 'DEFER_NEXT_DAY',
+              maxDeferralHours: 24,
+              maxLatenessMinutes: 180,
+              stopOnReply: false,
+              stopOnGoal: true,
+              templateRef: { id: 'tpl_fitting_reminder', name: 'tpl_fitting_reminder', language: 'en', revision: 1 },
+              bindings: {
+                '1': { source: 'customer.firstName' },
+                '2': { source: 'shop.displayName' },
+                '3': { source: 'appointment.serviceType', fallbackLiteral: 'Fitting' },
+                '4': { source: 'appointment.date', fallbackLiteral: 'Upcoming' },
+                '5': { source: 'appointment.time', fallbackLiteral: '10:00 AM' },
+                '6': { source: 'appointment.branch', fallbackLiteral: 'Main Store' },
+              },
+            },
+            {
+              stepId: 'alteration_stage_update',
+              stepName: 'Alteration Stage Update',
+              offsetDays: 0,
+              localTime: '11:00',
+              prerequisite: 'NONE',
+              outsideHoursPolicy: 'DEFER_NEXT_DAY',
+              maxDeferralHours: 24,
+              maxLatenessMinutes: 240,
+              stopOnReply: false,
+              stopOnGoal: true,
+              templateRef: { id: 'tpl_alteration_milestone', name: 'tpl_alteration_milestone', language: 'en', revision: 1 },
+              bindings: {
+                '1': { source: 'customer.firstName' },
+                '2': { source: 'shop.displayName' },
+                '3': { source: 'alteration.garment', fallbackLiteral: 'Outfit Piece' },
+                '4': { source: 'alteration.stage', fallbackLiteral: 'in progress' },
+                '5': { source: 'alteration.notes', fallbackLiteral: 'Please contact store for details' },
+              },
+            },
+          ],
+          enabledBranches: ['branch_main', 'branch_two'],
+          timezone: 'Asia/Kolkata',
+          bindingsSchemaVersion: 2,
+          isPublished: true,
+          publishedAt: now,
+        }, seedGroup, false)], session);
+      }
+
       return {
         shopACount,
         shopBCount,
@@ -4342,7 +4994,7 @@ if (require.main === module) {
       } else if (command === 'gift-wedding') {
         console.log('DEPRECATED: use pnpm seed:scenario gift-wedding');
         await seedScenario('gift-wedding', { live: isLive, reset: isReset });
-      } else if (['first-repeat', 'unresolved-enquiry', 'complete-outfit', 'selected-stock-promotion'].includes(command)) {
+      } else if (['first-repeat', 'unresolved-enquiry', 'complete-outfit', 'selected-stock-promotion', 'festival-collection', 'exhibition-trunk-show', 'fitting-alteration'].includes(command)) {
         await seedScenario(command, { live: isLive, reset: isReset });
       } else {
         const scenarioIdx = args.findIndex((a) => a === '--scenario' || a === '-s');

@@ -1101,6 +1101,239 @@
         }
       ],
       "bodyText": "Hi {{1}}, a reminder from {{2}} about the {{3}} offer: {{4}} on selected pieces, valid until {{5}}. Availability can change, so please check with the store before you visit."
+    },
+    {
+      "id": "tpl_exhibition_invite",
+      "name": "exhibition_invite",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "event_name",
+          "type": "text",
+          "sample": "Mumbai Silk Trunk Show 2026"
+        },
+        {
+          "index": 4,
+          "name": "date",
+          "type": "text",
+          "sample": "Nov 20, 2026"
+        },
+        {
+          "index": 5,
+          "name": "venue",
+          "type": "text",
+          "sample": "The Taj Mahal Palace, Mumbai"
+        },
+        {
+          "index": 6,
+          "name": "rsvp_link",
+          "type": "text",
+          "sample": "https://rsvp.example.com/trunk-show"
+        }
+      ],
+      "bodyText": "Hi {{1}}, {{2}} cordially invites you to {{3}} on {{4}} at {{5}}. Reserve your spot here: {{6}}"
+    },
+    {
+      "id": "tpl_exhibition_reminder",
+      "name": "exhibition_reminder",
+      "language": "en",
+      "category": "MARKETING",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "event_name",
+          "type": "text",
+          "sample": "Mumbai Silk Trunk Show 2026"
+        },
+        {
+          "index": 4,
+          "name": "date",
+          "type": "text",
+          "sample": "Nov 20, 2026"
+        },
+        {
+          "index": 5,
+          "name": "venue",
+          "type": "text",
+          "sample": "The Taj Mahal Palace, Mumbai"
+        }
+      ],
+      "bodyText": "Hi {{1}}, this is a gentle reminder from {{2}} about {{3}} on {{4}} at {{5}}. We look forward to welcoming you!"
+    },
+    {
+      "id": "tpl_fitting_confirmation",
+      "name": "fitting_confirmation",
+      "language": "en",
+      "category": "UTILITY",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "service_type",
+          "type": "text",
+          "sample": "Bridal Trial Fitting"
+        },
+        {
+          "index": 4,
+          "name": "date",
+          "type": "text",
+          "sample": "Nov 15, 2026"
+        },
+        {
+          "index": 5,
+          "name": "time",
+          "type": "text",
+          "sample": "03:30 PM"
+        },
+        {
+          "index": 6,
+          "name": "branch",
+          "type": "text",
+          "sample": "Boutique Main"
+        }
+      ],
+      "bodyText": "Hi {{1}}, your {{3}} appointment at {{2}} ({{6}}) is confirmed for {{4}} at {{5}}. Please reach out if you need to reschedule."
+    },
+    {
+      "id": "tpl_fitting_reminder",
+      "name": "fitting_reminder",
+      "language": "en",
+      "category": "UTILITY",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "service_type",
+          "type": "text",
+          "sample": "Bridal Trial Fitting"
+        },
+        {
+          "index": 4,
+          "name": "date",
+          "type": "text",
+          "sample": "Nov 15, 2026"
+        },
+        {
+          "index": 5,
+          "name": "time",
+          "type": "text",
+          "sample": "03:30 PM"
+        },
+        {
+          "index": 6,
+          "name": "branch",
+          "type": "text",
+          "sample": "Boutique Main"
+        }
+      ],
+      "bodyText": "Hi {{1}}, this is a friendly reminder of your {{3}} appointment tomorrow at {{2}} ({{6}}) on {{4}} at {{5}}. We look forward to seeing you!"
+    },
+    {
+      "id": "tpl_alteration_milestone",
+      "name": "alteration_milestone",
+      "language": "en",
+      "category": "UTILITY",
+      "status": "DUMMY",
+      "revision": 1,
+      "sendable": false,
+      "source": "DUMMY",
+      "variables": [
+        {
+          "index": 1,
+          "name": "name",
+          "type": "text",
+          "sample": "Lakshmi"
+        },
+        {
+          "index": 2,
+          "name": "shop",
+          "type": "text",
+          "sample": "Sample Boutique"
+        },
+        {
+          "index": 3,
+          "name": "garment",
+          "type": "text",
+          "sample": "Bridal Lehenga Blouse"
+        },
+        {
+          "index": 4,
+          "name": "stage",
+          "type": "text",
+          "sample": "ready for trial fitting"
+        },
+        {
+          "index": 5,
+          "name": "notes",
+          "type": "text",
+          "sample": "Please visit our store for your trial"
+        }
+      ],
+      "bodyText": "Hi {{1}}, update on your {{3}} at {{2}}: it is now {{4}}. {{5}}."
     }
   ]
 }

@@ -1,66 +1,72 @@
 # GroVastra Auto Campaigns - Progress & Status
 
-## Project Status: Feature F27 in progress — Selected-stock promotion Part 3
+## Project Status: Feature F30 Complete — Fitting / alteration campaign (FA01–FA35)
 
-F27 now includes the additive `SELECTED_STOCK` offer shape, integer paise
-pricing, shared preference matching with F26, preset registration, offer
-event-family ingestion and source revalidation, bounded offer fan-out with
-checkpoints, stock-offer enrollment, validity-capped timing, cancellation on
-withdrawal/expiry, pause handling, and reconciliation. Dispatch price/stock freeze checks are partially implemented and require
-additional end-to-end coverage. Part 3 seed, preview UI, and documentation
-surfaces are now in place.
+Feature F30 (Fitting / alteration campaign) is fully implemented and tested. It includes:
+- Clarified single catalog preset vs two operational sequences: Defined as a single catalog preset family (`id: 'fitting_alteration'`, `category: 'SERVICE'`, `triggerFamily: 'PRODUCTION_MILESTONE'`) with aliases (`FITTING_ALTERATION`, `fitting`, `alteration`, `fitting_appointment`, `alteration_milestone`) covering both Fitting Appointment sequence (`fitting:appointmentId`) and Alteration Milestone sequence (`alteration:jobId:milestoneId`).
+- Service category & anti-cap-bypass: Operates under purpose `SERVICE` (does not consume marketing contact caps). Enforces strict C14 anti-marketing-bypass (no discounts, promotions, or voucher variables in service templates).
+- Authoritative database schemas and adapters: `src_appointments` (`appointment-source.ts`) and `src_alterations` (`alteration-source.ts`) with compound unique indexes and status querying.
+- Pure matching engines: `matchFittingAppointment` and `matchAlterationMilestone` verifying customer status, suppression, appointment status/date validity, and alteration job stage integrity.
+- Late snapshot variable bindings: `appointment.serviceType`, `appointment.date`, `appointment.time`, `appointment.branch`, `appointment.stylistName`, and `alteration.jobId`, `alteration.garment`, `alteration.stage`, `alteration.trialDate`, `alteration.notes`.
+- Enroller & QA Matrix A17:
+  - Immediate confirmation step + 24h reminder step for appointments; skips reminder if appointment is within 24h (`APPOINTMENT_PASSED`).
+  - Stage execution planning for alteration milestones; strictly enforces anti-overpromise rule (never imply full outfit is ready when only a partial stage is complete).
+  - Rescheduling moves unsubmitted reminders to 24h before new time, updates `dateHistory` with `APPOINTMENT_RESCHEDULED`, and increments `planRevision`. Cancellation or completion stops unsubmitted reminder executions.
+- Event lifecycle consumers: `appointments` (`appointment.booked`, `appointment.rescheduled`, `appointment.cancelled`, `appointment.completed`) and `alterations` (`alteration.stage_changed`, `alteration.trial_ready`, `alteration.completed`, `alteration.cancelled`).
+- Reconciler script and endpoints: `GET /campaigns/:id/fitting-alteration/summary`, `POST /campaigns/:id/fitting-alteration/preview`, and dev trigger routes.
+- Seed scenario `fitting-alteration`: 4 appointments, 3 alterations, 25 customers across `shop_a` and `shop_b`, active campaign `cmp_fitting_alteration`.
+- Complete test suite FA01–FA35: 36/36 tests passing (FA00 meta-test + FA01 through FA35).
+- Web UI: Preset icon `Scissors` in `apps/web/app/campaigns/page.tsx`, and interactive flow toggle simulator card in `apps/web/app/campaigns/[id]/page.tsx`.
 
-Validation baseline after prerequisite fixes: 624 passed, 2 failed, 0 skipped
-(42 files). The current Part 1 increment is 627 passed, 2 failed, 0 skipped
-(42 files). The remaining failures are the existing F24b seed timeouts
-`SD02` and `SD09`; no F27 test failed.
-F27 foundation tests: 6 passed.
+### F30 Status: COMPLETE
 
-### F27 Status (current scope)
+## Previous Milestone: Feature F29 Complete — Exhibition / trunk show campaign (EX01–EX35)
+
+Feature F29 (Exhibition / trunk show campaign) is fully implemented and tested. It includes:
+- Store events database schema and adapter (`src_events`, `event-source.ts`) with compound unique index `{ tenantId: 1, eventId: 1 }` and `{ tenantId: 1, status: 1, startDate: 1 }`.
+- Customer schema update: added `city?: string | null` to `ISrcCustomer` and `SrcCustomerSchema` for localized geographic event filtering.
+- Pure preference matching module (`matchExhibitionEvent`) strictly adhering to Hard Rule 8 (customer name, gender, or religion is never inferred). Only declared category affinities, geographic location (`customer.city` matching `event.venue.city`), capacity status, and existing RSVP status are evaluated.
+- Capacity & RSVP gating:
+  - If event is marked `FULL` or `registeredCount >= capacity`, matching rejects candidate with `EVENT_AT_CAPACITY`.
+  - If customer has already registered/RSVP'd, generic invites are skipped with `CUSTOMER_REGISTERED`.
+- Full preset registration (`exhibition_trunk_show` and aliases `EXHIBITION_TRUNK_SHOW`, `exhibition`, `trunk_show`, `store_event`) with trigger type `OWNER_DATED_EVENT` / `STORE_EVENT`, default priority 45, Step 1 Invite (D-14), and Step 2 Reminder (D-3).
+- Store event event-family ingestion (`event.published`, `event.updated`, `event.cancelled`, `rsvp.completed`) with schema validation, non-existent event quarantine (`EVENT_INVALID`), bounded cursor fan-out with checkpoint persistence (`exhibition-fanout:{eventId}:{campaignId}`), and cancellation on event cancellation.
+- Step execution timing capped at `event.startDate`, skipping elapsed or past steps with `EVENT_ENDED` / `SKIPPED_ELAPSED`.
+- Late variable snapshot resolution for `event.name`, `event.date`, `event.venue`, `event.city`, and `event.rsvpLink`.
+- Goal handler stopping active enrollments and recording goal events upon matching `order.completed` events referencing `eventRef: eventId` or `occasionRef: storeevent:{eventId}`, as well as on customer RSVP completion.
+- Reconciler script and endpoints (`GET /campaigns/:id/exhibition/summary`, `POST /campaigns/:id/exhibition/preview`, `POST /dev/exhibition/trigger-event`).
+- Complete seed scenario `exhibition-trunk-show` with test fixtures (`evt_ex_mumbai_2026`, `evt_ex_delhi_2026`, `cus_ex_01-25`, shop_b customers, and `cmp_exhibition_trunk_show`).
+- Complete test suite EX01–EX35 (36 passed tests, including meta-test EX00 verifying `docs/test-matrix/F29.txt`).
+- Web UI test preview and summary card in `apps/web/app/campaigns/[id]/page.tsx` and preset icon in `apps/web/app/campaigns/page.tsx`.
+
+### F29 Status: COMPLETE
 
 DONE:
-- Part 0 prerequisite gate: MongoDB `rs0` primary reachable; F25 RA01-RA32
-  and F26 MC01-MC34 suites pass when run sequentially.
-- F25/F26 feature documentation restored.
-- Template catalogue readiness assertions derive counts from
-  `docs/meta-templates.json`.
-- F26 preference matching moved to
-  `apps/api/src/presets/_shared/preferenceMatching/matching.ts`; F26 keeps a
-  compatibility barrel and F27 reuses the shared item-affinity helper.
-- `src_offers` accepts the complete selected-stock status set and optional
-  `amountPaise`; offer event families are accepted by the event consumer and
-  authoritative offers/products are re-read before validation.
-- Invalid selected-stock offer events are persisted as `QUARANTINED` with
-  reason `OFFER_INVALID` and explanatory details.
-- `offer.published` fan-out scans customers in bounded batches, persists
-  `offer-fanout:{eventId}:{campaignId}` checkpoints, and creates the
-  `stockoffer:{offerId}` enrollment occurrence with offer references and
-  selected-item snapshots.
-- Enrollment timing uses the shared delay engine and caps execution expiry at
-  `offer.validUntil`; due steps at or after validity are skipped as
-  `OFFER_ENDED`.
-- `offer.withdrawn`, expired, and paused changes stop or skip unsent work;
-  `reconcile:selected-stock` scans recent active offers through the same
-  fan-out path.
-- Completed orders now stop matching selected-stock enrollments for offered
-  products/variants or `stockoffer:{offerId}` tags, record a goal event, and
-  skip unsent executions.
-- Foundation coverage currently includes SP01-SP06. Part 3 adds the seed
-  contract, campaign review UI, manual checklist, and manager questions; the
-  full SP01-SP35 matrix and its meta-test remain pending.
-- Fan-out now enforces `maxRecipientsPerOffer` as a durable checkpoint-backed
-  enrollment cap.
-- Selected-stock dispatch rechecks now recompute each frozen offer price from
-  the authoritative discount and current product price.
-- Dev routes now validate event input with zod and expose a withdrawal trigger.
+- Prerequisites gate: MongoDB `rs0` replica set, all previous suites passing.
+- Templates verified in `docs/meta-templates.json` (`tpl_exhibition_invite`, `tpl_exhibition_reminder`).
+- Store event schema (`src_events`), ingestion validation & quarantine.
+- Hard Rule 8 preference matching, geography, capacity, RSVP, and variable bindings (`event.name`, `event.date`, `event.venue`, `event.city`, `event.rsvpLink`).
+- Enroller, idempotent fan-out, and event-delay engine integration.
+- Goal match handler on `order.completed` and RSVP completion.
+- Full test suite `exhibition-trunk-show.test.ts` (EX00-EX35, 36/36 tests passed).
+- Seed scenario `exhibition-trunk-show` implemented and verified.
+- Web UI test preview and summary endpoints verified.
 
-NEXT:
-- Complete validity-extension/shortening replans, hard recipient caps, and
-  atomic dispatch stale-intent transitions.
-- Complete withdrawal/paused dev triggers, exact route schemas, and the
-  remaining SP01-SP35 tests plus their matrix meta-test.
-- Restart MongoDB replica set `rs0`, then rerun the blocked seed and
-  Mongo-backed regression/full suites.
+## Previous Milestone: Feature F28 Complete — Festival collection campaign (FC01–FC35)
+
+DONE:
+- Prerequisites gate: MongoDB `rs0` replica set, all previous suites passing.
+- Templates verified in `docs/meta-templates.json` (`tpl_collection_new_items`, `tpl_collection_new_simple`, `tpl_collection_followup`).
+- Season schema extension (`src_seasons`), ingestion validation & quarantine.
+- Hard Rule 8 preference matching, item capping, and variable bindings (`festival.name`, `festival.date`, `collection.name`, `match.itemList`).
+- Enroller, idempotent fan-out, and event-delay engine integration.
+- Goal match handler on `order.completed`.
+- Full test suite `festival-collection.test.ts` (FC00-FC35, 36/36 tests passed).
+- Seed scenario `festival-collection` implemented and verified.
+- Web UI test preview and summary endpoints verified.
+
+## Previous Milestone: Feature F27 Complete — Selected-stock promotion (SP01–SP35)
+
 
 ### What Exists
 

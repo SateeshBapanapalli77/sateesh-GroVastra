@@ -78,6 +78,10 @@ import {
 import { isQualifyingOrder } from '../../presets/_shared/orderTrigger/qualifying';
 import { handleSelectedStockOfferEvent } from '../../presets/selectedStockPromotion/offerHandlers';
 import { handleOrderCompletedForSelectedStockGoal } from '../../presets/selectedStockPromotion/goalHandler';
+import { handleFestivalSeasonEvent } from '../../presets/festivalCollection/seasonHandlers';
+import { handleOrderCompletedForFestivalGoal } from '../../presets/festivalCollection/goalHandler';
+import { handleStoreEvent, handleOrderCompletedForExhibitionGoal } from '../../presets/exhibitionTrunkShow';
+import { handleFittingAppointmentEvent, handleAlterationEvent } from '../../presets/fittingAlteration';
 
 export const PRODUCER_EVENT_FAMILIES: Record<string, string[]> = {
   orders: [
@@ -135,6 +139,30 @@ export const PRODUCER_EVENT_FAMILIES: Record<string, string[]> = {
     'offer.published',
     'offer.updated',
     'offer.withdrawn',
+  ],
+  seasons: [
+    'season.published',
+    'season.updated',
+    'season.cancelled',
+    'season.withdrawn',
+  ],
+  events: [
+    'event.published',
+    'event.updated',
+    'event.cancelled',
+    'rsvp.completed',
+  ],
+  appointments: [
+    'appointment.booked',
+    'appointment.rescheduled',
+    'appointment.cancelled',
+    'appointment.completed',
+  ],
+  alterations: [
+    'alteration.created',
+    'alteration.stage_changed',
+    'alteration.cancelled',
+    'alteration.completed',
   ],
   preferences: ['preference.changed'],
   'dev-tools': ['*'],
@@ -260,6 +288,14 @@ export class EventConsumerService {
       'offer.published',
       'offer.updated',
       'offer.withdrawn',
+      'season.published',
+      'season.updated',
+      'season.cancelled',
+      'season.withdrawn',
+      'event.published',
+      'event.updated',
+      'event.cancelled',
+      'rsvp.completed',
     ]);
 
     if (!SUPPORTED_EVENT_TYPES.has(eventType)) {
@@ -542,6 +578,34 @@ export class EventConsumerService {
           effects = await handleSelectedStockOfferEvent(eventDoc);
           break;
 
+        case 'season.published':
+        case 'season.updated':
+        case 'season.cancelled':
+        case 'season.withdrawn':
+          effects = await handleFestivalSeasonEvent(eventDoc);
+          break;
+
+        case 'event.published':
+        case 'event.updated':
+        case 'event.cancelled':
+        case 'rsvp.completed':
+          effects = await handleStoreEvent(eventDoc);
+          break;
+
+        case 'appointment.booked':
+        case 'appointment.rescheduled':
+        case 'appointment.cancelled':
+        case 'appointment.completed':
+          effects = await handleFittingAppointmentEvent(eventDoc);
+          break;
+
+        case 'alteration.created':
+        case 'alteration.stage_changed':
+        case 'alteration.cancelled':
+        case 'alteration.completed':
+          effects = await handleAlterationEvent(eventDoc);
+          break;
+
         default:
           logger.warn({ type: eventDoc.type }, 'Unhandled domain event type');
           effects = { unhandledType: eventDoc.type };
@@ -817,6 +881,12 @@ export class EventConsumerService {
     const selectedStockGoalResult = customerId
       ? await handleOrderCompletedForSelectedStockGoal(tenantId, customerId, order, occurredAt)
       : { goalMatches: [] };
+    const festivalGoalResult = customerId
+      ? await handleOrderCompletedForFestivalGoal(tenantId, customerId, order, occurredAt)
+      : { goalMatches: [] };
+    const exhibitionGoalResult = customerId
+      ? await handleOrderCompletedForExhibitionGoal(tenantId, customerId, order, occurredAt)
+      : { goalMatches: [] };
 
     return {
       orderId,
@@ -829,6 +899,8 @@ export class EventConsumerService {
       requestGoalResult,
       collectionGoalResult,
       selectedStockGoalResult,
+      festivalGoalResult,
+      exhibitionGoalResult,
     };
   }
 

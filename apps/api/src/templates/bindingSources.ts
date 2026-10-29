@@ -52,6 +52,23 @@ export interface BindingResolutionContext {
     }>;
   } | null;
   matchItemList?: string | null;
+  festivalName?: string | null;
+  festivalDate?: string | null;
+  seasonName?: string | null;
+  eventName?: string | null;
+  eventVenue?: string | null;
+  eventCity?: string | null;
+  eventRsvpLink?: string | null;
+  appointmentServiceType?: string | null;
+  appointmentDate?: string | null;
+  appointmentTime?: string | null;
+  appointmentBranch?: string | null;
+  appointmentStylistName?: string | null;
+  alterationJobId?: string | null;
+  alterationGarment?: string | null;
+  alterationStage?: string | null;
+  alterationTrialDate?: string | null;
+  alterationNotes?: string | null;
   now?: Date;
   timezone?: string;
 }
@@ -72,7 +89,7 @@ export interface BindingSourceDefinition {
   formatNote?: string;
   requiresRef?: 'offerRef' | 'creditRef';
   allowFallback: boolean; // only customer.firstName allows fallback
-  needs: Array<'customer' | 'shop' | 'occasion' | 'order' | 'offer' | 'stockoffer' | 'credit' | 'enquiry' | 'product' | 'outfit' | 'collection'>;
+  needs: Array<'customer' | 'shop' | 'occasion' | 'order' | 'offer' | 'stockoffer' | 'credit' | 'enquiry' | 'product' | 'outfit' | 'collection' | 'festival' | 'event' | 'appointment' | 'alteration'>;
   resolve: (ctx: BindingResolutionContext) => string | null;
 }
 
@@ -543,12 +560,15 @@ export const BINDING_SOURCES: Record<string, BindingSourceDefinition> = {
     allowedPresets: [
       'matching_collection',
       'MATCHING_COLLECTION',
+      'festival_collection',
+      'FESTIVAL_COLLECTION',
+      'festival',
     ],
     sampleValue: 'Diwali Festive Silk Collection 2026',
     formatNote: 'Title or name of the published collection',
     allowFallback: true,
-    needs: ['stockoffer'],
-    resolve: (ctx) => ctx.collectionName || ctx.collection?.title || null,
+    needs: ['collection'],
+    resolve: (ctx) => ctx.collectionName || ctx.collection?.title || (ctx.collection as any)?.name || ctx.seasonName || null,
   },
   'match.itemList': {
     path: 'match.itemList',
@@ -559,12 +579,313 @@ export const BINDING_SOURCES: Record<string, BindingSourceDefinition> = {
       'MATCHING_COLLECTION',
       'selected_stock_promotion',
       'SELECTED_STOCK_PROMOTION',
+      'festival_collection',
+      'FESTIVAL_COLLECTION',
+      'festival',
     ],
     sampleValue: 'Pure Kanjivaram Silk Saree, Banarasi Georgette',
     formatNote: 'Comma-separated names of matching items from the collection',
     needs: ['collection'],
     allowFallback: false,
     resolve: (ctx) => ctx.match?.itemList || ctx.matchItemList || (ctx.collection?.items?.[0] as any)?.name || null,
+  },
+  'festival.name': {
+    path: 'festival.name',
+    label: 'Festival Name',
+    valueType: 'text',
+    allowedPresets: [
+      'festival_collection',
+      'FESTIVAL_COLLECTION',
+      'festival',
+    ],
+    sampleValue: 'Diwali Festive Collection 2026',
+    formatNote: 'Name of the festival season',
+    allowFallback: true,
+    needs: ['festival'],
+    resolve: (ctx) => ctx.festivalName || ctx.seasonName || ctx.collectionName || null,
+  },
+  'festival.date': {
+    path: 'festival.date',
+    label: 'Festival Date',
+    valueType: 'text',
+    allowedPresets: [
+      'festival_collection',
+      'FESTIVAL_COLLECTION',
+      'festival',
+    ],
+    sampleValue: 'Nov 1, 2026',
+    formatNote: 'Formatted date of the festival',
+    allowFallback: false,
+    needs: ['festival'],
+    resolve: (ctx) => ctx.festivalDate || null,
+  },
+  'event.name': {
+    path: 'event.name',
+    label: 'Event Name',
+    valueType: 'text',
+    allowedPresets: [
+      'exhibition_trunk_show',
+      'EXHIBITION_TRUNK_SHOW',
+      'exhibition',
+      'trunk_show',
+      'store_event',
+    ],
+    sampleValue: 'Mumbai Silk Trunk Show 2026',
+    formatNote: 'Title or name of the exhibition/trunk show',
+    allowFallback: true,
+    needs: ['event'],
+    resolve: (ctx) => ctx.eventName || (ctx as any).storeEventName || null,
+  },
+  'event.date': {
+    path: 'event.date',
+    label: 'Event Date',
+    valueType: 'text',
+    allowedPresets: [
+      'exhibition_trunk_show',
+      'EXHIBITION_TRUNK_SHOW',
+      'exhibition',
+      'trunk_show',
+      'store_event',
+    ],
+    sampleValue: 'Nov 20, 2026',
+    formatNote: 'Formatted date of the store event',
+    allowFallback: false,
+    needs: ['event'],
+    resolve: (ctx) => {
+      if (!ctx.eventDate) return null;
+      return typeof ctx.eventDate === 'string' ? ctx.eventDate : formatDateOnly(ctx.eventDate as any, ctx.timezone);
+    },
+  },
+  'event.venue': {
+    path: 'event.venue',
+    label: 'Event Venue',
+    valueType: 'text',
+    allowedPresets: [
+      'exhibition_trunk_show',
+      'EXHIBITION_TRUNK_SHOW',
+      'exhibition',
+      'trunk_show',
+      'store_event',
+    ],
+    sampleValue: 'The Taj Mahal Palace, Mumbai',
+    formatNote: 'Venue name and city of the exhibition',
+    allowFallback: false,
+    needs: ['event'],
+    resolve: (ctx) => ctx.eventVenue || null,
+  },
+  'event.city': {
+    path: 'event.city',
+    label: 'Event City',
+    valueType: 'text',
+    allowedPresets: [
+      'exhibition_trunk_show',
+      'EXHIBITION_TRUNK_SHOW',
+      'exhibition',
+      'trunk_show',
+      'store_event',
+    ],
+    sampleValue: 'Mumbai',
+    formatNote: 'Host city of the exhibition',
+    allowFallback: false,
+    needs: ['event'],
+    resolve: (ctx) => ctx.eventCity || null,
+  },
+  'event.rsvpLink': {
+    path: 'event.rsvpLink',
+    label: 'Event RSVP Link',
+    valueType: 'text',
+    allowedPresets: [
+      'exhibition_trunk_show',
+      'EXHIBITION_TRUNK_SHOW',
+      'exhibition',
+      'trunk_show',
+      'store_event',
+    ],
+    sampleValue: 'https://rsvp.example.com/trunk-show',
+    formatNote: 'RSVP link URL for the event',
+    allowFallback: true,
+    needs: ['event'],
+    resolve: (ctx) => ctx.eventRsvpLink || null,
+  },
+  'appointment.serviceType': {
+    path: 'appointment.serviceType',
+    label: 'Appointment Service Type',
+    valueType: 'text',
+    allowedPresets: [
+      'fitting_alteration',
+      'FITTING_ALTERATION',
+      'fitting',
+      'alteration',
+      'fitting_appointment',
+      'alteration_milestone',
+    ],
+    sampleValue: 'Bridal Trial Fitting',
+    formatNote: 'Service type of appointment',
+    allowFallback: false,
+    needs: ['appointment'],
+    resolve: (ctx) => ctx.appointmentServiceType || null,
+  },
+  'appointment.date': {
+    path: 'appointment.date',
+    label: 'Appointment Date',
+    valueType: 'text',
+    allowedPresets: [
+      'fitting_alteration',
+      'FITTING_ALTERATION',
+      'fitting',
+      'alteration',
+      'fitting_appointment',
+      'alteration_milestone',
+    ],
+    sampleValue: 'Nov 15, 2026',
+    formatNote: 'Local date of the appointment',
+    allowFallback: false,
+    needs: ['appointment'],
+    resolve: (ctx) => ctx.appointmentDate || null,
+  },
+  'appointment.time': {
+    path: 'appointment.time',
+    label: 'Appointment Time',
+    valueType: 'text',
+    allowedPresets: [
+      'fitting_alteration',
+      'FITTING_ALTERATION',
+      'fitting',
+      'alteration',
+      'fitting_appointment',
+      'alteration_milestone',
+    ],
+    sampleValue: '03:30 PM',
+    formatNote: 'Local time of the appointment',
+    allowFallback: false,
+    needs: ['appointment'],
+    resolve: (ctx) => ctx.appointmentTime || null,
+  },
+  'appointment.branch': {
+    path: 'appointment.branch',
+    label: 'Appointment Branch',
+    valueType: 'text',
+    allowedPresets: [
+      'fitting_alteration',
+      'FITTING_ALTERATION',
+      'fitting',
+      'alteration',
+      'fitting_appointment',
+      'alteration_milestone',
+    ],
+    sampleValue: 'Boutique Main',
+    formatNote: 'Store branch for the appointment',
+    allowFallback: true,
+    needs: ['appointment'],
+    resolve: (ctx) => ctx.appointmentBranch || null,
+  },
+  'appointment.stylistName': {
+    path: 'appointment.stylistName',
+    label: 'Stylist Name',
+    valueType: 'text',
+    allowedPresets: [
+      'fitting_alteration',
+      'FITTING_ALTERATION',
+      'fitting',
+      'alteration',
+      'fitting_appointment',
+      'alteration_milestone',
+    ],
+    sampleValue: 'Pooja',
+    formatNote: 'Assigned stylist or master tailor',
+    allowFallback: true,
+    needs: ['appointment'],
+    resolve: (ctx) => ctx.appointmentStylistName || null,
+  },
+  'alteration.jobId': {
+    path: 'alteration.jobId',
+    label: 'Alteration Job ID',
+    valueType: 'text',
+    allowedPresets: [
+      'fitting_alteration',
+      'FITTING_ALTERATION',
+      'fitting',
+      'alteration',
+      'fitting_appointment',
+      'alteration_milestone',
+    ],
+    sampleValue: 'ALT-2026-001',
+    formatNote: 'Job reference identifier',
+    allowFallback: false,
+    needs: ['alteration'],
+    resolve: (ctx) => ctx.alterationJobId || null,
+  },
+  'alteration.garment': {
+    path: 'alteration.garment',
+    label: 'Alteration Garment',
+    valueType: 'text',
+    allowedPresets: [
+      'fitting_alteration',
+      'FITTING_ALTERATION',
+      'fitting',
+      'alteration',
+      'fitting_appointment',
+      'alteration_milestone',
+    ],
+    sampleValue: 'Bridal Lehenga Blouse',
+    formatNote: 'Garment or piece undergoing alteration',
+    allowFallback: false,
+    needs: ['alteration'],
+    resolve: (ctx) => ctx.alterationGarment || null,
+  },
+  'alteration.stage': {
+    path: 'alteration.stage',
+    label: 'Alteration Stage',
+    valueType: 'text',
+    allowedPresets: [
+      'fitting_alteration',
+      'FITTING_ALTERATION',
+      'fitting',
+      'alteration',
+      'fitting_appointment',
+      'alteration_milestone',
+    ],
+    sampleValue: 'ready for trial fitting',
+    formatNote: 'Current production stage (e.g. stitching, ready for trial)',
+    allowFallback: false,
+    needs: ['alteration'],
+    resolve: (ctx) => ctx.alterationStage || null,
+  },
+  'alteration.trialDate': {
+    path: 'alteration.trialDate',
+    label: 'Trial Date',
+    valueType: 'text',
+    allowedPresets: [
+      'fitting_alteration',
+      'FITTING_ALTERATION',
+      'fitting',
+      'alteration',
+      'fitting_appointment',
+      'alteration_milestone',
+    ],
+    sampleValue: 'Nov 18, 2026',
+    formatNote: 'Scheduled or suggested trial date',
+    allowFallback: true,
+    needs: ['alteration'],
+    resolve: (ctx) => ctx.alterationTrialDate || null,
+  },
+  'alteration.notes': {
+    path: 'alteration.notes',
+    label: 'Alteration Notes',
+    valueType: 'text',
+    allowedPresets: [
+      'fitting_alteration',
+      'FITTING_ALTERATION',
+      'fitting',
+      'alteration',
+      'fitting_appointment',
+      'alteration_milestone',
+    ],
+    sampleValue: 'Please visit our store for your trial',
+    formatNote: 'Specific instructions or tailor notes',
+    allowFallback: true,
+    needs: ['alteration'],
+    resolve: (ctx) => ctx.alterationNotes || null,
   },
 };
 

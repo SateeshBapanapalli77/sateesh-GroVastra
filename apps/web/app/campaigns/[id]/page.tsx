@@ -37,6 +37,7 @@ import {
   ChevronDown,
   ChevronRight,
   X,
+  Scissors,
 } from 'lucide-react';
 import {
   Campaign,
@@ -197,6 +198,16 @@ function renderLivePreviewText(
       val = '31 Dec 2026';
     } else if (source === 'credit.daysToExpiry') {
       val = '14';
+    } else if (source === 'event.name') {
+      val = 'Exclusive Taj Trunk Show';
+    } else if (source === 'event.date') {
+      val = '20 Nov 2026';
+    } else if (source === 'event.venue') {
+      val = 'The Taj Mahal Palace, Mumbai';
+    } else if (source === 'event.city') {
+      val = 'Mumbai';
+    } else if (source === 'event.rsvpLink') {
+      val = 'https://rsvp.example.com/trunk-show';
     } else {
       val = `{{${v.index}}}`;
     }
@@ -309,6 +320,90 @@ export default function CampaignEditorPage() {
   const [stockOfferId, setStockOfferId] = useState('off_sp_percent');
   const [stockPreview, setStockPreview] = useState<any | null>(null);
   const [stockPreviewError, setStockPreviewError] = useState<string | null>(null);
+
+  // Festival Collection Preview State (F28)
+  const [festivalSeasonId, setFestivalSeasonId] = useState('season_fc_diwali');
+  const [festivalPreview, setFestivalPreview] = useState<any | null>(null);
+  const [festivalPreviewLoading, setFestivalPreviewLoading] = useState(false);
+  const [festivalPreviewError, setFestivalPreviewError] = useState<string | null>(null);
+
+  const runFestivalPreview = async () => {
+    if (!campaign || !festivalSeasonId.trim()) return;
+    setFestivalPreviewLoading(true);
+    setFestivalPreviewError(null);
+    try {
+      const response = await fetch(`/api/campaigns/${campaign.campaignId}/festival/preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seasonId: festivalSeasonId.trim() }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message || 'Unable to preview festival season');
+      setFestivalPreview(payload);
+    } catch (error) {
+      setFestivalPreviewError(error instanceof Error ? error.message : 'Unable to preview festival season');
+    } finally {
+      setFestivalPreviewLoading(false);
+    }
+  };
+
+  // Exhibition / Trunk Show Preview State (F29)
+  const [exhibitionEventId, setExhibitionEventId] = useState('evt_ex_mumbai_2026');
+  const [exhibitionPreview, setExhibitionPreview] = useState<any | null>(null);
+  const [exhibitionPreviewLoading, setExhibitionPreviewLoading] = useState(false);
+  const [exhibitionPreviewError, setExhibitionPreviewError] = useState<string | null>(null);
+
+  const runExhibitionPreview = async () => {
+    if (!campaign || !exhibitionEventId.trim()) return;
+    setExhibitionPreviewLoading(true);
+    setExhibitionPreviewError(null);
+    try {
+      const response = await fetch(`/api/campaigns/${campaign.campaignId}/exhibition/preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: exhibitionEventId.trim() }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message || 'Unable to preview exhibition event');
+      setExhibitionPreview(payload);
+    } catch (error) {
+      setExhibitionPreviewError(error instanceof Error ? error.message : 'Unable to preview exhibition event');
+    } finally {
+      setExhibitionPreviewLoading(false);
+    }
+  };
+
+  // Fitting / Alteration Preview State (F30)
+  const [faPreviewType, setFaPreviewType] = useState<'appointment' | 'alteration'>('appointment');
+  const [faAppointmentId, setFaAppointmentId] = useState('appt_fa_01');
+  const [faJobId, setFaJobId] = useState('alt_fa_01');
+  const [faPreview, setFaPreview] = useState<any | null>(null);
+  const [faPreviewLoading, setFaPreviewLoading] = useState(false);
+  const [faPreviewError, setFaPreviewError] = useState<string | null>(null);
+
+  const runFaPreview = async () => {
+    if (!campaign) return;
+    setFaPreviewLoading(true);
+    setFaPreviewError(null);
+    try {
+      const body =
+        faPreviewType === 'appointment'
+          ? { appointmentId: faAppointmentId.trim() }
+          : { jobId: faJobId.trim() };
+      const response = await fetch(`/api/campaigns/${campaign.campaignId}/fitting-alteration/preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'Unable to preview fitting/alteration candidate');
+      setFaPreview(payload);
+    } catch (error) {
+      setFaPreviewError(error instanceof Error ? error.message : 'Unable to preview fitting/alteration candidate');
+    } finally {
+      setFaPreviewLoading(false);
+    }
+  };
 
   const runCollectionPreview = async () => {
     if (!collectionPreviewReleaseId.trim() || !campaign) return;
@@ -5156,6 +5251,207 @@ export default function CampaignEditorPage() {
                   )}
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.76rem', marginBottom: 0 }}>
                     A message never reserves an item or claims low stock. Paused, ended, or unmatched offers are skipped at send time.
+                  </p>
+                </div>
+              )}
+
+              {/* F28: Festival collection season review */}
+              {campaign && (campaign.presetId === 'festival_collection' || campaign.presetId === 'FESTIVAL_COLLECTION' || campaign.presetId === 'festival') && (
+                <div className="glass-panel" style={{ padding: 24, marginTop: 24, border: '1px solid rgba(236, 72, 153, 0.35)', background: 'rgba(236, 72, 153, 0.04)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <Sparkles size={18} color="#ec4899" />
+                    <h3 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', fontWeight: 700 }}>Festival Season Collection Review (F28)</h3>
+                  </div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                    Festival dates, seasons, and catalogue collections come from your catalogue and season calendar. Customers are matched strictly on declared saree/outfit preferences (Hard Rule 8: names and religion are never inferred).
+                  </p>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <input className="input-field" value={festivalSeasonId} onChange={(event) => setFestivalSeasonId(event.target.value)} aria-label="Season ID" placeholder="season_fc_diwali" style={{ minWidth: 220 }} />
+                    <button type="button" className="btn btn-primary" onClick={runFestivalPreview} disabled={festivalPreviewLoading}>
+                      {festivalPreviewLoading ? 'Evaluating...' : 'Test Season Matching'}
+                    </button>
+                  </div>
+                  {festivalPreviewError && <p style={{ color: 'var(--accent-rose)', fontSize: '0.82rem', marginTop: 8 }}>{festivalPreviewError}</p>}
+                  {festivalPreview && (
+                    <div style={{ marginTop: 14, padding: 14, borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.07)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                        <strong style={{ color: '#fff', fontSize: '0.92rem' }}>{festivalPreview.season?.name || festivalSeasonId}</strong>
+                        <span className="badge badge-ACTIVE">{festivalPreview.season?.status || 'ACTIVE'}</span>
+                      </div>
+                      <div style={{ marginTop: 8, display: 'flex', gap: 16, color: 'var(--text-secondary)', fontSize: '0.82rem', flexWrap: 'wrap' }}>
+                        <span>Festival Date: {festivalPreview.season?.festivalDate ? new Date(festivalPreview.season.festivalDate).toLocaleDateString() : 'N/A'}</span>
+                        <span>Matched Audience: <strong>{festivalPreview.wouldCount}</strong> / {festivalPreview.scanned} customers</span>
+                        <span>Collection Items: {festivalPreview.items?.length || 0}</span>
+                      </div>
+                      {festivalPreview.samples && festivalPreview.samples.length > 0 && (
+                        <div style={{ marginTop: 12 }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Sample Matches</span>
+                          <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {festivalPreview.samples.slice(0, 3).map((sample: any, idx: number) => (
+                              <div key={idx} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', gap: 8 }}>
+                                <span style={{ color: 'var(--accent-cyan)' }}>{sample.customerRef}</span>
+                                <span>{sample.matched ? `Matched: ${sample.items?.map((it: any) => it.name).join(', ') || 'Festival items'}` : 'Not matched'}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.76rem', marginTop: 12, marginBottom: 0 }}>
+                    Step 1 launches D-21 prior to the festival; Step 2 follows up at D-7. Steps past the festival date automatically expire.
+                  </p>
+                </div>
+              )}
+
+              {/* F29: Exhibition / Trunk Show review */}
+              {campaign && (campaign.presetId === 'exhibition_trunk_show' || campaign.presetId === 'EXHIBITION_TRUNK_SHOW' || campaign.presetId === 'exhibition' || campaign.presetId === 'trunk_show' || campaign.presetId === 'store_event') && (
+                <div className="glass-panel" style={{ padding: 18, marginTop: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <Calendar size={18} color="var(--accent-indigo)" />
+                    <h3 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', fontWeight: 700 }}>Exhibition / Trunk Show Review (F29)</h3>
+                  </div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                    Authoritative trunk shows, exhibitions, and pop-ups are event-driven. Customers are matched strictly based on geography, venue capacity, and declared categories (Hard Rule 8: names and religion are never inferred).
+                  </p>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <input className="input-field" value={exhibitionEventId} onChange={(event) => setExhibitionEventId(event.target.value)} aria-label="Event ID" placeholder="evt_ex_mumbai_2026" style={{ minWidth: 220 }} />
+                    <button type="button" className="btn btn-primary" onClick={runExhibitionPreview} disabled={exhibitionPreviewLoading}>
+                      {exhibitionPreviewLoading ? 'Evaluating...' : 'Test Event Matching'}
+                    </button>
+                  </div>
+                  {exhibitionPreviewError && <p style={{ color: 'var(--accent-rose)', fontSize: '0.82rem', marginTop: 8 }}>{exhibitionPreviewError}</p>}
+                  {exhibitionPreview && (
+                    <div style={{ marginTop: 14, padding: 14, borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.07)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                        <strong style={{ color: '#fff', fontSize: '0.92rem' }}>{exhibitionPreview.event?.title || exhibitionEventId}</strong>
+                        <span className="badge badge-ACTIVE">{exhibitionPreview.event?.status || 'ACTIVE'}</span>
+                      </div>
+                      <div style={{ marginTop: 8, display: 'flex', gap: 16, color: 'var(--text-secondary)', fontSize: '0.82rem', flexWrap: 'wrap' }}>
+                        <span>Start Date: {exhibitionPreview.event?.startDate ? new Date(exhibitionPreview.event.startDate).toLocaleDateString() : 'N/A'}</span>
+                        <span>Venue: {exhibitionPreview.event?.venue?.name || 'N/A'}, {exhibitionPreview.event?.city || ''}</span>
+                        <span>Capacity: {exhibitionPreview.event?.registeredCount ?? 0} / {exhibitionPreview.event?.capacity || 'Open'}</span>
+                        <span>Matched Audience: <strong>{exhibitionPreview.wouldCount}</strong> / {exhibitionPreview.scanned} customers</span>
+                      </div>
+                      {exhibitionPreview.samples && exhibitionPreview.samples.length > 0 && (
+                        <div style={{ marginTop: 12 }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Sample Matches</span>
+                          <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {exhibitionPreview.samples.slice(0, 3).map((sample: any, idx: number) => (
+                              <div key={idx} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', gap: 8 }}>
+                                <span style={{ color: 'var(--accent-cyan)' }}>{sample.customerRef}</span>
+                                <span>{sample.matched ? `Matched: ${sample.matchReasons?.join(', ') || 'Eligible customer'}` : `Excluded: ${sample.reason || 'Not matched'}`}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.76rem', marginTop: 12, marginBottom: 0 }}>
+                    Step 1 Invitation launches D-14 prior to the event; Step 2 Reminder follows up at D-3. Steps past the event start date automatically skip with EVENT_ENDED.
+                  </p>
+                </div>
+              )}
+
+              {/* F30: Fitting / Alteration Review */}
+              {campaign && (campaign.presetId === 'fitting_alteration' || campaign.presetId === 'FITTING_ALTERATION' || campaign.presetId === 'fitting' || campaign.presetId === 'alteration' || campaign.presetId === 'fitting_appointment' || campaign.presetId === 'alteration_milestone') && (
+                <div className="glass-panel" style={{ padding: 18, marginTop: 16, border: '1px solid rgba(20, 184, 166, 0.35)', background: 'rgba(20, 184, 166, 0.04)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <Scissors size={18} color="#14b8a6" />
+                    <h3 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', fontWeight: 700 }}>Fitting / Alteration Review (F30)</h3>
+                    <span className="badge badge-ACTIVE" style={{ fontSize: '0.7rem' }}>SERVICE CATEGORY</span>
+                  </div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: 1.5, marginBottom: 12 }}>
+                    Fitting and Alteration is a unified <strong>SERVICE</strong> preset family covering two distinct sequence modes:
+                    <strong> Fitting Appointments</strong> (confirmation + 24h reminder before trial; rescheduling recalculates reminder to 24h before new time per QA Matrix A17) and
+                    <strong> Tailoring Milestones</strong> (stage-specific tailoring progress; strictly avoids over-promising that the whole outfit is ready when only a stage or blouse is complete).
+                    Operates under service purpose: does not consume marketing contact caps and strictly forbids promotional offers or discounts.
+                  </p>
+
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      className={`btn ${faPreviewType === 'appointment' ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ padding: '4px 12px', fontSize: '0.78rem' }}
+                      onClick={() => setFaPreviewType('appointment')}
+                    >
+                      Fitting Appointment Flow
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn ${faPreviewType === 'alteration' ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ padding: '4px 12px', fontSize: '0.78rem' }}
+                      onClick={() => setFaPreviewType('alteration')}
+                    >
+                      Alteration Milestone Flow
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    {faPreviewType === 'appointment' ? (
+                      <input
+                        className="input-field"
+                        value={faAppointmentId}
+                        onChange={(event) => setFaAppointmentId(event.target.value)}
+                        aria-label="Appointment ID"
+                        placeholder="appt_fa_01"
+                        style={{ minWidth: 220 }}
+                      />
+                    ) : (
+                      <input
+                        className="input-field"
+                        value={faJobId}
+                        onChange={(event) => setFaJobId(event.target.value)}
+                        aria-label="Job ID"
+                        placeholder="alt_fa_01"
+                        style={{ minWidth: 220 }}
+                      />
+                    )}
+                    <button type="button" className="btn btn-primary" onClick={runFaPreview} disabled={faPreviewLoading}>
+                      {faPreviewLoading ? 'Evaluating...' : faPreviewType === 'appointment' ? 'Test Appointment Matching' : 'Test Alteration Matching'}
+                    </button>
+                  </div>
+
+                  {faPreviewError && <p style={{ color: 'var(--accent-rose)', fontSize: '0.82rem', marginTop: 8 }}>{faPreviewError}</p>}
+                  {faPreview && (
+                    <div style={{ marginTop: 14, padding: 14, borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.07)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                        <strong style={{ color: '#fff', fontSize: '0.92rem' }}>
+                          {faPreview.type === 'APPOINTMENT'
+                            ? `Appointment: ${faPreview.appointment?.appointmentId} (${faPreview.appointment?.serviceType})`
+                            : `Alteration Job: ${faPreview.alteration?.jobId} (${faPreview.alteration?.garmentDescription})`}
+                        </strong>
+                        <span className={`badge ${faPreview.match?.eligible ? 'badge-ACTIVE' : 'badge-PAUSED'}`}>
+                          {faPreview.match?.eligible ? 'ELIGIBLE' : faPreview.match?.reason || 'EXCLUDED'}
+                        </span>
+                      </div>
+                      <div style={{ marginTop: 8, display: 'flex', gap: 16, color: 'var(--text-secondary)', fontSize: '0.82rem', flexWrap: 'wrap' }}>
+                        <span>Customer: <strong>{faPreview.customer?.firstName || 'Customer'}</strong> ({faPreview.customer?.customerId})</span>
+                        {faPreview.type === 'APPOINTMENT' ? (
+                          <>
+                            <span>Scheduled: {faPreview.appointment?.scheduledAt ? new Date(faPreview.appointment.scheduledAt).toLocaleString() : 'N/A'}</span>
+                            <span>Stylist: {faPreview.appointment?.stylistName || 'Store Staff'}</span>
+                            <span>Status: {faPreview.appointment?.status}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Stage: {faPreview.alteration?.currentStage}</span>
+                            <span>Trial Date: {faPreview.alteration?.trialDate ? new Date(faPreview.alteration.trialDate).toLocaleDateString() : 'Pending'}</span>
+                            <span>Notes: {faPreview.alteration?.notes || 'None'}</span>
+                          </>
+                        )}
+                      </div>
+                      {faPreview.match?.reasonText && (
+                        <div style={{ marginTop: 8, fontSize: '0.78rem', color: faPreview.match?.eligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
+                          {faPreview.match.reasonText}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.76rem', marginTop: 12, marginBottom: 0 }}>
+                    Step 1 Confirmation sends immediately on booking. Step 2 Reminder delivers 24h prior to appointment. On rescheduling, reminder dueAt automatically shifts and bumps planRevision.
                   </p>
                 </div>
               )}

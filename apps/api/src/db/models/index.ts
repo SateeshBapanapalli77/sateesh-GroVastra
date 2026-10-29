@@ -30,6 +30,10 @@ export * from './src-enquiry.model';
 export * from './src-product.model';
 export * from './src-request.model';
 export * from './src-collection.model';
+export * from './src-season.model';
+export * from './src-event.model';
+export * from './src-appointment.model';
+export * from './src-alteration.model';
 export * from './dev-seed-state.model';
 
 
