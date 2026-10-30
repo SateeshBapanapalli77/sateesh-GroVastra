@@ -314,6 +314,7 @@ export const CAMPAIGN_PRESETS: CampaignPreset[] = [
     description: 'Alias for the customer-declared event date reminder preset.',
     triggerFamily: 'CUSTOMER_DECLARED_EVENT',
     implemented: true,
+    isAlias: true,
     category: 'MARKETING',
     defaults: {
       name: 'Wedding Shopping Reminder',
@@ -594,8 +595,6 @@ export const CAMPAIGN_PRESETS: CampaignPreset[] = [
   OUTFIT_COLLECTION_DELIVERY_DEFINITION as unknown as CampaignPreset,
   WELCOME_NEW_CUSTOMER_DEFINITION,
   REQUESTED_ITEM_AVAILABLE_DEFINITION as CampaignPreset,
-  SELECTED_STOCK_PROMOTION_DEFINITION as unknown as CampaignPreset,
-  FESTIVAL_COLLECTION_DEFINITION as unknown as CampaignPreset,
   EXHIBITION_TRUNK_SHOW_DEFINITION as unknown as CampaignPreset,
 ];
 
@@ -605,8 +604,16 @@ export class CampaignService {
    */
   listPresets(): CampaignPreset[] {
     const isMetaMode = (process.env.DISPATCH_MODE || '').toLowerCase() === 'meta';
-    if (!isMetaMode) return CAMPAIGN_PRESETS;
-    return CAMPAIGN_PRESETS.map((p) => {
+    // Canonical filter: exclude alias entries and ensure unique preset keys
+    const seen = new Set<string>();
+    const canonicalPresets = CAMPAIGN_PRESETS.filter((p) => {
+      if (p.isAlias || p.id === 'gift_wedding' || seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+
+    if (!isMetaMode) return canonicalPresets;
+    return canonicalPresets.map((p) => {
       const isWelcome = p.id === WELCOME_NEW_CUSTOMER_ID || p.id === WELCOME_NEW_CUSTOMER_ALIAS;
       const isRepeat =
         p.id === 'FIRST_TO_SECOND_PURCHASE' ||
@@ -905,6 +912,15 @@ export class CampaignService {
       scope: parsed.data.scope || (defaults as any).scope || 'PER_CUSTOMER',
       schemaVersion: parsed.data.schemaVersion || (defaults as any).schemaVersion || 2,
       minFirstOrderNetPaise: parsed.data.minFirstOrderNetPaise !== undefined ? parsed.data.minFirstOrderNetPaise : ((defaults as any).minFirstOrderNetPaise ?? 0),
+      usefulForDays: parsed.data.usefulForDays ?? (defaults as any).usefulForDays,
+      goalMode: parsed.data.goalMode ?? (defaults as any).goalMode ?? null,
+      requireItem: parsed.data.requireItem ?? (defaults as any).requireItem,
+      pairing: (parsed.data as any).pairing ?? (defaults as any).pairing,
+      minDaysBetweenEnrollments: (parsed.data as any).minDaysBetweenEnrollments ?? (defaults as any).minDaysBetweenEnrollments,
+      minAffinityScore: (parsed.data as any).minAffinityScore ?? (defaults as any).minAffinityScore,
+      milestone: (parsed.data as any).milestone ?? (defaults as any).milestone,
+      fulfilmentFilter: (parsed.data as any).fulfilmentFilter ?? (defaults as any).fulfilmentFilter,
+      partialReadyTemplateRef: (parsed.data as any).partialReadyTemplateRef ?? (defaults as any).partialReadyTemplateRef,
     });
 
     const controlGate = new CampaignControlGateModel({
@@ -1035,6 +1051,15 @@ export class CampaignService {
         scope: data.scope !== undefined ? data.scope : draft.scope,
         schemaVersion: data.schemaVersion !== undefined ? data.schemaVersion : draft.schemaVersion,
         minFirstOrderNetPaise: data.minFirstOrderNetPaise !== undefined ? data.minFirstOrderNetPaise : draft.minFirstOrderNetPaise,
+        usefulForDays: data.usefulForDays !== undefined ? data.usefulForDays : draft.usefulForDays,
+        goalMode: data.goalMode !== undefined ? data.goalMode : draft.goalMode,
+        requireItem: data.requireItem !== undefined ? data.requireItem : draft.requireItem,
+        pairing: (data as any).pairing !== undefined ? (data as any).pairing : (draft as any).pairing,
+        minDaysBetweenEnrollments: (data as any).minDaysBetweenEnrollments !== undefined ? (data as any).minDaysBetweenEnrollments : (draft as any).minDaysBetweenEnrollments,
+        minAffinityScore: (data as any).minAffinityScore !== undefined ? (data as any).minAffinityScore : (draft as any).minAffinityScore,
+        milestone: (data as any).milestone !== undefined ? (data as any).milestone : (draft as any).milestone,
+        fulfilmentFilter: (data as any).fulfilmentFilter !== undefined ? (data as any).fulfilmentFilter : (draft as any).fulfilmentFilter,
+        partialReadyTemplateRef: (data as any).partialReadyTemplateRef !== undefined ? (data as any).partialReadyTemplateRef : (draft as any).partialReadyTemplateRef,
         isPublished: false,
         activatedBy: null,
         activatedAt: null,
@@ -1059,6 +1084,15 @@ export class CampaignService {
       if (data.scope !== undefined) draft.scope = data.scope;
       if (data.schemaVersion !== undefined) draft.schemaVersion = data.schemaVersion;
       if (data.minFirstOrderNetPaise !== undefined) draft.minFirstOrderNetPaise = data.minFirstOrderNetPaise;
+      if (data.usefulForDays !== undefined) draft.usefulForDays = data.usefulForDays;
+      if (data.goalMode !== undefined) draft.goalMode = data.goalMode;
+      if (data.requireItem !== undefined) draft.requireItem = data.requireItem;
+      if ((data as any).pairing !== undefined) (draft as any).pairing = (data as any).pairing;
+      if ((data as any).minDaysBetweenEnrollments !== undefined) (draft as any).minDaysBetweenEnrollments = (data as any).minDaysBetweenEnrollments;
+      if ((data as any).minAffinityScore !== undefined) (draft as any).minAffinityScore = (data as any).minAffinityScore;
+      if ((data as any).milestone !== undefined) (draft as any).milestone = (data as any).milestone;
+      if ((data as any).fulfilmentFilter !== undefined) (draft as any).fulfilmentFilter = (data as any).fulfilmentFilter;
+      if ((data as any).partialReadyTemplateRef !== undefined) (draft as any).partialReadyTemplateRef = (data as any).partialReadyTemplateRef;
 
       draft.version = nextVersion;
       await draft.save();

@@ -195,7 +195,7 @@ export class CampaignValidationService {
           });
         }
       }
-      if ((draft as any).goalMode !== undefined) {
+      if ((draft as any).goalMode != null) {
         const gm = (draft as any).goalMode;
         if (!['ITEM_OR_TAGGED', 'TAGGED_ONLY', 'ANY_QUALIFYING_ORDER'].includes(gm)) {
           errors.push({
@@ -216,7 +216,7 @@ export class CampaignValidationService {
 
     // 2.75. Validate stockAvailabilityWindowDays and goalMode for Requested Item Available (F25)
     if (isRequestedItem) {
-      if ((draft as any).stockAvailabilityWindowDays !== undefined) {
+      if ((draft as any).stockAvailabilityWindowDays != null) {
         const sw = (draft as any).stockAvailabilityWindowDays;
         if (typeof sw !== 'number' || !Number.isInteger(sw) || sw < 1 || sw > 60) {
           errors.push({
@@ -226,7 +226,7 @@ export class CampaignValidationService {
           });
         }
       }
-      if ((draft as any).goalMode !== undefined) {
+      if ((draft as any).goalMode != null) {
         const gm = (draft as any).goalMode;
         if (!['ITEM_OR_TAGGED', 'TAGGED_ONLY', 'ANY_QUALIFYING_ORDER'].includes(gm)) {
           errors.push({

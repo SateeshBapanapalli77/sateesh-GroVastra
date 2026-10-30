@@ -843,4 +843,88 @@ describe('Welcome Campaign Preset (WELCOME_NEW_CUSTOMER)', () => {
     expect(patchRes.status).toBe(200);
     expect(patchRes.body.draft.trigger.type).toBe('EVENT_DELAY');
   });
+
+  // ============================================================================
+  // V32: PATCH /campaigns/:id/draft succeeds when goalMode is passed and allows validation & dry-run
+  // ============================================================================
+  it('V32: PATCH /campaigns/:id/draft succeeds when goalMode is passed and allows validation & dry-run', async () => {
+    const createRes = await request(app)
+      .post('/campaigns')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `idemp-v32-create-${Date.now()}`)
+      .send({
+        presetId: 'WELCOME_NEW_CUSTOMER',
+        name: 'Welcome GoalMode Save Test',
+      });
+
+    expect(createRes.status).toBe(201);
+    const campaignId = createRes.body.campaign.campaignId;
+
+    const patchRes = await request(app)
+      .patch(`/campaigns/${campaignId}/draft`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `idemp-v32-patch-${Date.now()}`)
+      .send({
+        expectedVersion: 1,
+        goalMode: 'ITEM_OR_TAGGED',
+        name: 'Welcome GoalMode Save Test (Updated)',
+      });
+
+    expect(patchRes.status).toBe(200);
+    expect(patchRes.body.draft.goalMode).toBe('ITEM_OR_TAGGED');
+
+    // Validation should succeed
+    const validateRes = await request(app)
+      .post(`/campaigns/${campaignId}/validate`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(validateRes.status).toBe(200);
+
+    // Dry run should execute without being blocked
+    const dryRunRes = await request(app)
+      .post(`/campaigns/${campaignId}/dry-runs`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(dryRunRes.status).toBe(201);
+  });
+
+  // ============================================================================
+  // V33: PATCH /campaigns/:id/draft succeeds when goalMode: null is passed
+  // ============================================================================
+  it('V33: PATCH /campaigns/:id/draft succeeds when goalMode: null is passed', async () => {
+    const createRes = await request(app)
+      .post('/campaigns')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `idemp-v33-create-${Date.now()}`)
+      .send({
+        presetId: 'WELCOME_NEW_CUSTOMER',
+        name: 'Welcome Null GoalMode Test',
+      });
+
+    expect(createRes.status).toBe(201);
+    const campaignId = createRes.body.campaign.campaignId;
+
+    const patchRes = await request(app)
+      .patch(`/campaigns/${campaignId}/draft`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('Idempotency-Key', `idemp-v33-patch-${Date.now()}`)
+      .send({
+        expectedVersion: 1,
+        goalMode: null,
+        name: 'Welcome Null GoalMode Test (Updated)',
+      });
+
+    expect(patchRes.status).toBe(200);
+
+    // Validation should succeed
+    const validateRes = await request(app)
+      .post(`/campaigns/${campaignId}/validate`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(validateRes.status).toBe(200);
+    expect(validateRes.body.valid).toBe(true);
+
+    // Dry run should execute cleanly
+    const dryRunRes = await request(app)
+      .post(`/campaigns/${campaignId}/dry-runs`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(dryRunRes.status).toBe(201);
+  });
 });

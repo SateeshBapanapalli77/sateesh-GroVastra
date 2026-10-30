@@ -21,6 +21,7 @@
     "planner": "tsx src/planner/index.ts",
     "worker": "tsx src/worker/index.ts",
     "event-consumer": "tsx src/consumer/index.ts",
+    "demo:live": "tsx src/scripts/resetDemoLive.ts",
     "start": "node dist/server.js",
     "cleanup:legacy-visit": "tsx src/scripts/cleanupLegacyVisit.ts",
     "check:legacy-visit": "tsx src/scripts/checkLegacyVisit.ts",

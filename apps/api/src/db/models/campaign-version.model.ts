@@ -265,8 +265,7 @@ const CampaignVersionSchema = new Schema<ICampaignVersion>(
     },
     goalMode: {
       type: String,
-      enum: ['ITEM_OR_TAGGED', 'TAGGED_ONLY', 'ANY_QUALIFYING_ORDER', 'COMPLEMENT_OR_TAGGED', 'ANY_COLLECTION_ITEM'],
-      default: 'ITEM_OR_TAGGED',
+      default: null,
     },
     requireItem: {
       type: Boolean,

@@ -20,6 +20,7 @@
     "planner": "pnpm --filter @grovastra/api planner",
     "worker": "pnpm --filter @grovastra/api worker",
     "event-consumer": "pnpm --filter @grovastra/api event-consumer",
+    "demo:live": "pnpm --filter @grovastra/api demo:live",
     "test": "pnpm --filter @grovastra/api test",
     "test:watch": "pnpm --filter @grovastra/api test:watch"
   },

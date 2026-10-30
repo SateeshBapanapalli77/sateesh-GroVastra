@@ -789,6 +789,7 @@ export interface CampaignPreset {
   triggerFamily: string;
   implemented: boolean;
   category: string;
+  isAlias?: boolean;
   defaults?: Partial<CampaignVersion>;
 }
 

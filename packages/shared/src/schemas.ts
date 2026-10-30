@@ -614,9 +614,18 @@ export const CreateCampaignInputSchema = z
     enabledBranches: z.array(z.string()).min(1).optional(),
     startAt: z.union([z.string(), z.date()]).nullish(),
     endAt: z.union([z.string(), z.date()]).nullish(),
-    scope: z.enum(['PER_CUSTOMER', 'PER_CUSTOMER_PER_BRANCH']).optional(),
-    schemaVersion: z.number().int().positive().optional(),
-    minFirstOrderNetPaise: z.number().int().min(0).max(100000000).optional(),
+    scope: z.enum(['PER_CUSTOMER', 'PER_CUSTOMER_PER_BRANCH']).nullish(),
+    schemaVersion: z.number().int().positive().nullish(),
+    minFirstOrderNetPaise: z.number().int().min(0).max(100000000).nullish(),
+    usefulForDays: z.number().int().min(1).max(60).nullish(),
+    goalMode: z.string().nullish(),
+    requireItem: z.boolean().nullish(),
+    pairing: z.any().nullish(),
+    minDaysBetweenEnrollments: z.number().int().min(0).max(365).nullish(),
+    minAffinityScore: z.number().nullish(),
+    milestone: z.string().nullish(),
+    fulfilmentFilter: z.string().nullish(),
+    partialReadyTemplateRef: z.any().nullish(),
   })
   .strict();
 
@@ -644,9 +653,18 @@ export const UpdateCampaignDraftInputSchema = z
     importPolicy: z.literal('FUTURE_ONLY').optional(),
     startAt: z.union([z.string(), z.date()]).nullish(),
     endAt: z.union([z.string(), z.date()]).nullish(),
-    scope: z.enum(['PER_CUSTOMER', 'PER_CUSTOMER_PER_BRANCH']).optional(),
-    schemaVersion: z.number().int().positive().optional(),
-    minFirstOrderNetPaise: z.number().int().min(0).max(100000000).optional(),
+    scope: z.enum(['PER_CUSTOMER', 'PER_CUSTOMER_PER_BRANCH']).nullish(),
+    schemaVersion: z.number().int().positive().nullish(),
+    minFirstOrderNetPaise: z.number().int().min(0).max(100000000).nullish(),
+    usefulForDays: z.number().int().min(1).max(60).nullish(),
+    goalMode: z.string().nullish(),
+    requireItem: z.boolean().nullish(),
+    pairing: z.any().nullish(),
+    minDaysBetweenEnrollments: z.number().int().min(0).max(365).nullish(),
+    minAffinityScore: z.number().nullish(),
+    milestone: z.string().nullish(),
+    fulfilmentFilter: z.string().nullish(),
+    partialReadyTemplateRef: z.any().nullish(),
   })
   .strict();
 

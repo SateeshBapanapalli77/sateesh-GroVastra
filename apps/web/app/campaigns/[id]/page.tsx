@@ -663,24 +663,32 @@ export default function CampaignEditorPage() {
       };
 
       const draftScope = dataToSave?.scope ?? (draft as any).scope;
-      if (draftScope !== undefined) {
+      if (draftScope != null) {
         payload.scope = draftScope;
       }
       const draftMinPaise = dataToSave?.minFirstOrderNetPaise ?? (draft as any).minFirstOrderNetPaise;
-      if (draftMinPaise !== undefined) {
+      if (draftMinPaise != null) {
         payload.minFirstOrderNetPaise = draftMinPaise;
       }
       const draftPairing = dataToSave?.pairing ?? (draft as any).pairing;
-      if (draftPairing !== undefined) {
+      if (draftPairing != null) {
         payload.pairing = draftPairing;
       }
       const draftMinDays = dataToSave?.minDaysBetweenEnrollments ?? (draft as any).minDaysBetweenEnrollments;
-      if (draftMinDays !== undefined) {
+      if (draftMinDays != null) {
         payload.minDaysBetweenEnrollments = draftMinDays;
       }
       const draftGoalMode = dataToSave?.goalMode ?? (draft as any).goalMode;
-      if (draftGoalMode !== undefined) {
+      if (draftGoalMode != null) {
         payload.goalMode = draftGoalMode;
+      }
+      const draftUsefulForDays = dataToSave?.usefulForDays ?? (draft as any).usefulForDays;
+      if (draftUsefulForDays != null) {
+        payload.usefulForDays = draftUsefulForDays;
+      }
+      const draftRequireItem = dataToSave?.requireItem ?? (draft as any).requireItem;
+      if (draftRequireItem != null) {
+        payload.requireItem = draftRequireItem;
       }
 
       const idempotencyKey = `save-draft-${campaign.campaignId}-v${draft.version}-${Date.now()}`;
@@ -4497,7 +4505,7 @@ export default function CampaignEditorPage() {
                     <AlertTriangle size={24} color="var(--accent-rose)" style={{ flexShrink: 0 }} />
                     <div>
                       <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem' }}>
-                        Dry Run Simulation Blocked
+                        {validating ? 'Validation Blocked' : 'Simulation / Validation Blocked'}
                       </div>
                       <div style={{ fontSize: '0.85rem', color: '#fecdd3', marginTop: 2 }}>
                         {errorMsg}
